@@ -5,6 +5,26 @@
     padding-top: 4px;
 }
 
+/* Macro reminder warning */
+.persist-warning {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 200, 60, 0.45);
+    background: rgba(255, 200, 60, 0.08);
+    color: #ffd76e;
+    font-size: 0.92em;
+    line-height: 1.5;
+}
+
+.persist-warning code {
+    background: rgba(0, 0, 0, 0.35);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #ffe9a8;
+}
+
 .persist_settings_content h4 {
     margin: 8px 0;
     color: var(--SmartThemeBodyColor);

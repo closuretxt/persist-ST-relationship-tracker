@@ -14,7 +14,7 @@ export const defaultSettings = {
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
     saturationDecayPerTurn: 2, // Deterministic JS-side Saturation decay per turn
-    debug_mode: true,
+    debug_mode: false,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
     injectWorldInfo: false, // Append the <world_info> block to the tracker context
@@ -23,7 +23,7 @@ export const defaultSettings = {
     // prompt, parsing, state applier, injected macro and the panel UI.
     // One flag per defined stat (generated) plus Mind/Relationship.
     ...Object.fromEntries(STAT_DEFINITIONS.map(def => [trackFlagFor(def.key), true])),
-    trackMind: true,
+    trackMind: false,
     trackRelationship: true,
 };
 
