@@ -1,19 +1,18 @@
 /* Persist - Relationship Tracker styles */
 
-#persist_extension_settings .persist-block {
-    margin-bottom: 10px;
+/* Settings menu */
+.persist_settings_content {
+    padding-top: 4px;
 }
 
-#persist_extension_settings label {
-    display: block;
-    margin-bottom: 3px;
+.persist_settings_content h4 {
+    margin: 8px 0;
     color: var(--SmartThemeBodyColor);
 }
 
 #persist_extension_settings select.text_pole,
 #persist_extension_settings input.text_pole {
-    width: 100%;
-    display: block;
+    min-width: 0;
 }
 
 /* Character panel */
