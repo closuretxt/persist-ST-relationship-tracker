@@ -25,12 +25,23 @@ function parseFields(body) {
     return fields;
 }
 
+// Strips bracketed stat-delta tokens like [Friendship+2] or [Saturation -1]
+// from free-text fields; deltas belong only in the "Stats:" field.
+const DELTA_TOKEN_RE = /\s*\[[A-Za-z ]+\s*[+\-]\s*\d+\]\s*/g;
+
+function cleanTextField(value) {
+    return String(value || "").replace(DELTA_TOKEN_RE, " ").replace(/\s{2,}/g, " ").trim();
+}
+
 function extractStatusBodies(text, regex) {
     const results = [];
     let m;
     regex.lastIndex = 0;
     while ((m = regex.exec(text)) !== null) {
-        results.push({ fields: parseFields(m[1]), raw: m[1].trim() });
+        const fields = parseFields(m[1]);
+        if (fields.Description) fields.Description = cleanTextField(fields.Description);
+        if (fields.Effect) fields.Effect = cleanTextField(fields.Effect);
+        results.push({ fields, raw: m[1].trim() });
     }
     return results;
 }
