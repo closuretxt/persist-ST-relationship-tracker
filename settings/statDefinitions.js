@@ -45,7 +45,7 @@ export const STAT_DEFINITIONS = [
     {
         key: "acquiescence",
         label: "Acquiescence",
-        defaultValue: 0,
+        defaultValue: 20,
         prompt: "Acquiescence: how willing this character is to perform intimate acts. It changes accordingly with relationship and trust. Behaving weird or awkwardly decreases this value.",
     },
 ];
