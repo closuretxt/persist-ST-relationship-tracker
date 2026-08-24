@@ -1,0 +1,84 @@
+<!-- Persist - SillyTavern Relationship Tracker -->
+<div id="persist_extension_settings" class="persist-extension-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Persist - Relationship Tracker</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="persist-block flex-container flexGap5">
+                <label class="checkbox_label">
+                    <input id="persist_enabled" type="checkbox" />
+                    <span>Enabled</span>
+                </label>
+                <label class="checkbox_label">
+                    <input id="persist_autorun" type="checkbox" />
+                    <span>Auto-run tracker on AI messages</span>
+                </label>
+                <label class="checkbox_label">
+                    <input id="persist_tracker_enabled" type="checkbox" />
+                    <span>Tracker LLM pass</span>
+                </label>
+            </div>
+
+            <div class="persist-block flex-container flexGap5">
+                <label class="checkbox_label">
+                    <input id="persist_inject_statuses" type="checkbox" />
+                    <span>Inject statuses into {{relationship_persistent}}</span>
+                </label>
+            </div>
+
+            <hr class="sysHR" />
+
+            <div class="persist-block">
+                <label for="persist_tracker_profile">Tracker connection profile (requires Connection Manager)</label>
+                <select id="persist_tracker_profile" class="text_pole"></select>
+            </div>
+
+            <div class="persist-block">
+                <label for="persist_context_depth">Context depth (history messages sent for context)</label>
+                <input id="persist_context_depth" type="number" min="0" max="100" class="text_pole" />
+            </div>
+
+            <div class="persist-block">
+                <label for="persist_max_stat_change">Max stat change per turn (per stat, hard cap)</label>
+                <input id="persist_max_stat_change" type="number" min="1" max="100" class="text_pole" />
+            </div>
+
+            <div class="persist-block">
+                <label for="persist_status_disable_turns">Turns a status must stay disabled before removal is honored</label>
+                <input id="persist_status_disable_turns" type="number" min="0" max="50" class="text_pole" />
+            </div>
+
+            <div class="persist-block">
+                <label for="persist_saturation_decay">Saturation decay per turn</label>
+                <input id="persist_saturation_decay" type="number" min="0" max="50" class="text_pole" />
+            </div>
+
+            <div class="persist-block flex-container flexGap5">
+                <label class="checkbox_label">
+                    <input id="persist_legacy_api" type="checkbox" />
+                    <span>Legacy API support (swap profiles via slash command)</span>
+                </label>
+                <label class="checkbox_label">
+                    <input id="persist_debug_mode" type="checkbox" />
+                    <span>Debug mode</span>
+                </label>
+            </div>
+
+            <div class="persist-block flex-container">
+                <button id="persist_run_tracker" class="menu_button">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <span>Run tracker now</span>
+                </button>
+            </div>
+
+            <hr class="sysHR" />
+
+            <div class="persist-block">
+                <b>Tracked characters</b>
+                <div id="persist_character_panel"></div>
+            </div>
+        </div>
+    </div>
+</div>
