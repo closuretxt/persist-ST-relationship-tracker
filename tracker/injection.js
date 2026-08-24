@@ -88,6 +88,46 @@ function escapeHtml(text) {
         .replaceAll('"', "&quot;");
 }
 
+// Formats one status's raw stat deltas as "+N / -N" chip labels.
+// Weight is applied for display purposes only (disabled statuses count half).
+function formatStatChips(statEffects, weight = 1) {
+    const chips = [];
+    for (const key of STAT_KEYS) {
+        const value = statEffects?.[key];
+        if (!value) continue;
+        const weighted = Math.round(value * weight);
+        if (weighted === 0) continue;
+        const sign = weighted > 0 ? "+" : "";
+        chips.push(`<span class="persist-chip persist-chip-${weighted > 0 ? "up" : "down"}">${STAT_LABELS[key]} ${sign}${weighted}</span>`);
+    }
+    return chips.join("");
+}
+
+// Sums every status's stat effects into the character's current net modifier.
+// With no active effects this is always exactly ZERO.
+function computeNetEffect(statuses) {
+    const net = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
+    for (const s of statuses || []) {
+        const weight = s.disabled ? 0.5 : 1;
+        for (const key of STAT_KEYS) {
+            net[key] += Math.round((s.statEffects?.[key] ?? 0) * weight * 10) / 10;
+        }
+    }
+    // Round away float dust so an empty set renders as clean zeros.
+    for (const key of STAT_KEYS) {
+        net[key] = Math.round(net[key]);
+    }
+    return net;
+}
+
+function renderNetEffect(net) {
+    const chips = formatStatChips(net, 1);
+    if (!chips) {
+        return '<div class="persist-net"><span class="persist-net-label">Net effect</span><span class="persist-chip persist-chip-zero">ZERO</span></div>';
+    }
+    return `<div class="persist-net"><span class="persist-net-label">Net effect</span>${chips}</div>`;
+}
+
 function renderCharacterCard(charId, ch) {
     const statBars = STAT_KEYS.map(key => {
         const value = ch.stats[key] ?? 1;
@@ -99,13 +139,20 @@ function renderCharacterCard(charId, ch) {
             </div>`;
     }).join("");
 
-    const statusItems = (ch.statuses || []).map((s, index) => `
+    const statusItems = (ch.statuses || []).map((s, index) => {
+        const weight = s.disabled ? 0.5 : 1;
+        const statChips = formatStatChips(s.statEffects, weight);
+        return `
         <div class="persist-status-item ${s.disabled ? "persist-status-disabled" : ""}">
             <div class="persist-status-header">
                 <span class="persist-status-name">${escapeHtml(s.name)}</span>
-                <span class="persist-status-type persist-type-${escapeHtml(String(s.type).toLowerCase())}">${escapeHtml(s.type)}</span>
+                <span class="persist-status-type persist-type-${escapeHtml(String(s.type).toLowerCase())}">${escapeHtml(s.type)}${s.disabled ? " · disabled" : ""}</span>
             </div>
+            ${s.description ? `<div class="persist-status-description">${escapeHtml(s.description)}</div>` : ""}
             ${s.effect ? `<div class="persist-status-effect">${escapeHtml(s.effect)}</div>` : ""}
+            ${statChips
+                ? `<div class="persist-status-stats">${statChips}${s.disabled ? '<span class="persist-chip-hint">×½ (disabled)</span>' : ""}</div>`
+                : '<div class="persist-status-stats"><span class="persist-chip persist-chip-zero">No stat effects</span></div>'}
             <div class="persist-status-actions">
                 <button class="menu_button menu_button_icon persist-status-toggle" data-char="${escapeHtml(charId)}" data-index="${index}"
                     title="${s.disabled ? "Re-enable this status" : "Disable this status"}">
@@ -116,14 +163,18 @@ function renderCharacterCard(charId, ch) {
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
-        </div>`).join("");
+        </div>`;
+    }).join("");
 
     return `
         <div class="persist-character-card" data-char="${escapeHtml(charId)}">
-            <div class="persist-character-name">${escapeHtml(ch.name || charId)}</div>
-            ${ch.relationship ? `<div class="persist-relationship">Relationship: <b>${escapeHtml(ch.relationship)}</b></div>` : ""}
+            <div class="persist-character-header">
+                <span class="persist-character-name">${escapeHtml(ch.name || charId)}</span>
+                ${ch.relationship ? `<span class="persist-relationship-tag">${escapeHtml(ch.relationship)}</span>` : ""}
+            </div>
             ${ch.mind ? `<div class="persist-mind">"${escapeHtml(ch.mind)}"</div>` : ""}
-            ${statBars}
+            <div class="persist-stat-bars">${statBars}</div>
+            ${renderNetEffect(computeNetEffect(ch.statuses))}
             <div class="persist-statuses-header">Statuses</div>
             ${statusItems || '<div class="persist-no-statuses">No statuses.</div>'}
         </div>`;
