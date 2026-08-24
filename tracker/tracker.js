@@ -2,7 +2,7 @@
 // profile via ConnectionManagerRequestService, parses the result, applies it.
 
 import { substituteParams } from "../../../../../script.js";
-import { extension_settings } from "../../../extensions.js";
+import { extension_settings } from "../../../../extensions.js";
 import {
     logDebug,
     getST,
