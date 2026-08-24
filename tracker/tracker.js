@@ -2,6 +2,7 @@
 // profile via ConnectionManagerRequestService, parses the result, applies it.
 
 import { substituteParams } from "../../../../../script.js";
+import { getWorldInfoPrompt } from "../../../../world-info.js";
 import { extension_settings } from "../../../../extensions.js";
 import {
     logDebug,
@@ -73,9 +74,53 @@ function buildContextBlock() {
     return block;
 }
 
-export function buildTrackerMessages() {
+// Appends World Info (and/or WI outlets) to the user prompt, following the
+// Recast pattern: <world_info> block plus auto-appended <outlet> blocks.
+async function buildWorldInfoBlock() {
+    const settings = extension_settings[extensionName] || {};
+    const injectWI = settings.injectWorldInfo === true;
+    const injectOutlets = settings.injectWIOutlets === true;
+    if ((!injectWI && !injectOutlets) || typeof getWorldInfoPrompt !== "function") {
+        return "";
+    }
+
+    try {
+        const st = getST();
+        const chatStrings = st.chat.slice().reverse().map(msg => msg.mes);
+        const wiResult = await getWorldInfoPrompt(chatStrings, 100000, true);
+        if (typeof wiResult !== "object" || wiResult === null) return "";
+
+        let block = "";
+
+        if (injectWI) {
+            const wiBefore = wiResult.worldInfoBefore || "";
+            const wiAfter = wiResult.worldInfoAfter || "";
+            const wiText = (wiBefore + "\n" + wiAfter).trim();
+            if (wiText) {
+                block += `<world_info>\n${wiText}\n</world_info>\n\n`;
+            }
+        }
+
+        if (injectOutlets) {
+            const outletEntries = wiResult.outletEntries || {};
+            for (const [outletName, contents] of Object.entries(outletEntries)) {
+                const outletText = Array.isArray(contents) ? contents.join("\n") : String(contents);
+                block += `<outlet name="${outletName}">\n${outletText}\n</outlet>\n\n`;
+            }
+        }
+
+        return block;
+    } catch (e) {
+        console.error("[Persist] Error fetching World Info for tracker:", e);
+        return "";
+    }
+}
+
+export async function buildTrackerMessages() {
+    const settings = extension_settings[extensionName] || {};
     const systemPrompt = substituteParams(getTrackerPrompt());
-    const userPrompt = substituteParams(buildContextBlock());
+    const wiBlock = await buildWorldInfoBlock();
+    const userPrompt = substituteParams(buildContextBlock() + (wiBlock ? "\n\n" + wiBlock.trimEnd() : ""));
     return [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -203,7 +248,7 @@ export async function runTracker(messageId = null) {
         tickState(turn);
 
         pipelineBar.setProgress(0.15, "Building tracker prompt...");
-        const messages = buildTrackerMessages();
+        const messages = await buildTrackerMessages();
         const profileId = resolveConnectionProfile(st, settings.trackerProfile || "");
         if (isCancelled) return { skipped: true, reason: "cancelled" };
 

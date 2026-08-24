@@ -15,6 +15,8 @@ export const defaultSettings = {
     debug_mode: true,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
+    injectWorldInfo: false, // Append the <world_info> block to the tracker context
+    injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
     trackRomantic: true,
@@ -37,7 +39,7 @@ const TRACK_OPTION_IDS = [
 ];
 
 export function initSettingsListeners() {
-    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api").on("change", saveSettings);
+    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets").on("change", saveSettings);
     $("#persist_injection_mode").on("change", saveSettings);
     $(TRACK_OPTION_IDS.map(id => `#${id}`).join(", ")).on("change", saveSettings);
     $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay").on("input change", saveSettings);
@@ -67,6 +69,8 @@ export async function loadSettings() {
     $("#persist_injection_mode").val(s.injectionMode === "raw" ? "raw" : "prompt");
     $("#persist_debug_mode").prop("checked", s.debug_mode);
     $("#persist_legacy_api").prop("checked", s.legacy_api);
+    $("#persist_inject_world_info").prop("checked", s.injectWorldInfo === true);
+    $("#persist_inject_wi_outlets").prop("checked", s.injectWIOutlets === true);
     $("#persist_context_depth").val(s.contextDepth ?? 10);
     $("#persist_max_stat_change").val(s.maxStatChangePerTurn ?? 15);
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
@@ -94,6 +98,8 @@ export function saveSettings() {
     s.injectionMode = $("#persist_injection_mode").val() === "raw" ? "raw" : "prompt";
     s.debug_mode = $("#persist_debug_mode").prop("checked");
     s.legacy_api = $("#persist_legacy_api").prop("checked");
+    s.injectWorldInfo = $("#persist_inject_world_info").prop("checked");
+    s.injectWIOutlets = $("#persist_inject_wi_outlets").prop("checked");
     s.contextDepth = parseInt($("#persist_context_depth").val(), 10) || 10;
     s.maxStatChangePerTurn = parseInt($("#persist_max_stat_change").val(), 10) || 15;
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
