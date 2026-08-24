@@ -13,6 +13,7 @@ export const defaultSettings = {
     injectStatuses: true, // Legacy: kept for migration; superseded by statusInjectFormat
     statusInjectFormat: "full", // "full" = name+desc+effect; "simple" = name+effect; "name" = name only; "none" = no statuses injected
     injectionMode: "prompt", // "prompt" = wrapped in <user_relationships> with explanation; "raw" = bare list only
+    characterInjectionWindow: 10, // Inject only characters active in the last X turns (0 = inject everyone)
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
     saturationDecayPerTurn: 2, // Deterministic JS-side Saturation decay per turn
@@ -47,7 +48,7 @@ export function initSettingsListeners() {
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
-    $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval").on("input change", saveSettings);
+    $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
 
     $("#persist_run_tracker").on("click", async () => {
@@ -95,6 +96,7 @@ export async function loadSettings() {
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
     $("#persist_auto_run_interval").val(s.autoRunInterval ?? 1);
+    $("#persist_character_injection_window").val(s.characterInjectionWindow ?? 10);
 
     populateConnectionDropdown($("#persist_tracker_profile"), s.trackerProfile);
 
@@ -132,6 +134,7 @@ export function saveSettings() {
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
     s.autoRunInterval = Math.max(1, parseInt($("#persist_auto_run_interval").val(), 10) || 1);
+    s.characterInjectionWindow = Math.max(0, parseInt($("#persist_character_injection_window").val(), 10) || 0);
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");
     for (const opt of TRACK_OPTIONS) {
         s[opt.flag] = $(`#${opt.id}`).prop("checked");

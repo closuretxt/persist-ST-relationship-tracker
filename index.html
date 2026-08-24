@@ -85,6 +85,10 @@
                             <span style="min-width: 160px;">Saturation Decay / Turn:</span>
                             <input type="number" id="persist_saturation_decay" class="text_pole flex1" value="2" min="0" max="50" step="1" />
                         </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Only inject characters that were updated within the last X turns into {{relationship_persistent}} (0 = inject everyone, no matter how long ago). Keeps token usage sane in harem/large-cast scenarios.">
+                            <span style="min-width: 160px;">Character Inject Window:</span>
+                            <input type="number" id="persist_character_injection_window" class="text_pole flex1" value="10" min="0" max="999" step="1" />
+                        </div>
                         <label class="checkbox_label" style="margin-top: 8px;" title="Append the activated World Info (before/after entries) to the tracker context inside a <world_info> block">
                             <input type="checkbox" id="persist_inject_world_info" />
                             <span>Inject World Info into Tracker</span>

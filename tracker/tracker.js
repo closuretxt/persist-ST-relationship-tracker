@@ -45,10 +45,42 @@ function isGhostMessage(m) {
     return false;
 }
 
+// Characters whose name appears in the imminent messages, even if they
+// haven't been updated recently. Lets the tracker pick a character back up
+// the moment they are named again in the scene.
+function getMentionedCharacterIds() {
+    const st = getST();
+    const interval = getAutoRunInterval();
+    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
+    const targetCount = Math.min(visibleChat.length, interval * 2);
+    const target = visibleChat.slice(-targetCount);
+    const text = target.map(m => String(m.mes ?? "")).join("\n").toLowerCase();
+
+    const mentioned = new Set();
+    for (const [charId, ch] of Object.entries(getAllCharacters())) {
+        const name = String(ch.name || charId).toLowerCase().trim();
+        // Ignore very short names to avoid false positives.
+        if (name.length >= 3 && text.includes(name)) {
+            mentioned.add(charId);
+        }
+    }
+    return mentioned;
+}
+
 function buildCurrentStateBlock() {
     const settings = extension_settings[extensionName] || {};
     const characters = getAllCharacters();
-    const entries = Object.entries(characters);
+    const currentTurn = getCurrentTurn();
+    const window = parseInt(settings.characterInjectionWindow, 10) || 0;
+    const mentionedIds = getMentionedCharacterIds();
+
+    const entries = Object.entries(characters).filter(([charId, ch]) => {
+        if (!window || window <= 0) return true; // 0 = always include everyone
+        if (mentionedIds.has(charId)) return true; // name trigger
+        const lastSeen = ch.turn ?? 0;
+        if (lastSeen <= 0) return true; // never updated: keep until first update
+        return (currentTurn - lastSeen) <= window; // activity trigger
+    });
     if (entries.length === 0) return "";
 
     const statKeys = enabledStatKeys();

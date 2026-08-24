@@ -4,7 +4,7 @@
 
 import { macros as macroSystem } from "../../../../macros/macro-system.js";
 import { extension_settings } from "../../../../extensions.js";
-import { getAllCharacters, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange, enabledStatKeys } from "./state.js";
+import { getAllCharacters, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange, enabledStatKeys, getCurrentTurn } from "./state.js";
 import { getInjectionPrompt } from "../settings/defaultInjection.js";
 
 export const extensionName = "Persist";
@@ -17,12 +17,24 @@ function formatStatLine(key, value) {
 }
 
 // Builds the full injected text for all tracked characters.
+// Characters are injected while they are "relevant": active within the last
+// `characterInjectionWindow` turns. 0 = always inject everyone.
+function isCharacterRelevant(ch, currentTurn, window) {
+    if (!window || window <= 0) return true; // 0 = inject everyone
+    const lastSeen = ch.turn ?? 0;
+    if (lastSeen <= 0) return true; // never updated: keep until first update
+    return (currentTurn - lastSeen) <= window;
+}
+
 export function buildInjectionText() {
     const settings = extension_settings[extensionName] || {};
     const characters = getAllCharacters();
+    const currentTurn = getCurrentTurn();
+    const window = parseInt(settings.characterInjectionWindow, 10) || 0;
     const blocks = [];
 
     for (const [charId, ch] of Object.entries(characters)) {
+        if (!isCharacterRelevant(ch, currentTurn, window)) continue;
         const statLines = enabledStatKeys().map(k => formatStatLine(k, ch.stats[k]));
         const lines = [];
         lines.push(`<${charId}_relationship>`);
