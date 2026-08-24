@@ -266,8 +266,10 @@ export function applyUpdate(update, turn) {
     }
 
     // 2) Deterministic stat changes ONLY from statuses (never bare LLM deltas),
-    // applied to enabled stats only.
-    const deltas = computeDeltas(ch);
+    // applied to enabled stats only. Statuses are persistent passives: their
+    // deltas are applied ONCE (on creation) and afterwards only the DIFFERENCE
+    // when the status is edited - never the full sum every turn.
+    const deltas = computePendingDeltas(ch);
     const enabledKeys = enabledStatKeys();
     for (const key of enabledKeys) {
         ch.stats[key] = clamp(ch.stats[key] + deltas[key], 1, 100);
@@ -302,6 +304,45 @@ export function computeDeltas(ch) {
         deltas[key] = Math.round(capDelta(deltas[key], settings));
     }
 
+    applySaturationRules(deltas, ch, settings);
+    return deltas;
+}
+
+// The deltas that applyUpdate() should actually apply THIS turn: only the
+// not-yet-applied portion of each active status (new statuses apply fully;
+// edits apply just the change; disabled statuses apply nothing). Per-turn
+// deterministic Saturation coupling/decay is added on top.
+function computePendingDeltas(ch) {
+    const settings = getExtensionSettings();
+    const deltas = emptyDeltas();
+    const enabled = new Set(enabledStatKeys());
+
+    for (const status of ch.statuses) {
+        if (status.disabled) {
+            status.appliedEffects = {}; // nothing applied while disabled
+            continue;
+        }
+        const applied = status.appliedEffects || {};
+        for (const key of enabled) {
+            const declared = status.statEffects?.[key] || 0;
+            const diff = declared - (applied[key] || 0);
+            if (diff) deltas[key] += diff;
+        }
+        // Mark the declared effects as applied so they don't repeat next turn.
+        status.appliedEffects = { ...status.statEffects };
+    }
+
+    for (const key of STAT_KEYS) {
+        deltas[key] = Math.round(capDelta(deltas[key], settings));
+    }
+
+    applySaturationRules(deltas, ch, settings);
+    return deltas;
+}
+
+// Deterministic per-turn Saturation rules, shared by computeDeltas() (UI net
+// effect) and computePendingDeltas() (actual application).
+function applySaturationRules(deltas, ch, settings) {
     if (settings.trackSaturation !== false) {
         // Saturation rises when other stats rise (cooldown meter fills).
         const positiveOthers = ["romantic", "friendship", "hate"]
@@ -316,8 +357,6 @@ export function computeDeltas(ch) {
         // Saturation disabled: never change it.
         deltas.saturation = 0;
     }
-
-    return deltas;
 }
 
 // Status-only portion of the deltas (no Saturation coupling/decay), used when

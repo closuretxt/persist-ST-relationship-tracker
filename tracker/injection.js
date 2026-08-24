@@ -31,11 +31,20 @@ export function buildInjectionText() {
         if (settings.trackRelationship !== false && ch.relationship) lines.push(`Relationship:${ch.relationship}`);
 
         const activeStatuses = (ch.statuses || []).filter(s => !s.disabled);
-        if (settings.injectStatuses !== false && activeStatuses.length > 0) {
+        const format = ["full", "simple", "name", "none"].includes(settings.statusInjectFormat)
+            ? settings.statusInjectFormat
+            : (settings.injectStatuses === false ? "none" : "full"); // migrate legacy checkbox
+        if (format !== "none" && activeStatuses.length > 0) {
             lines.push("<statuses>");
             for (const s of activeStatuses) {
-                const detail = s.effect || s.description || "";
-                lines.push(detail ? `${s.name} (${detail})` : s.name);
+                if (format === "name") {
+                    lines.push(s.name);
+                    continue;
+                }
+                const parts = [];
+                if (format === "full" && s.description) parts.push(s.description.replace(/\.$/, ""));
+                if ((format === "full" || format === "simple") && s.effect) parts.push(s.effect.replace(/\.$/, ""));
+                lines.push(parts.length > 0 ? `${s.name} (${parts.join("; ")})` : s.name);
             }
             lines.push("</statuses>");
         }
@@ -122,9 +131,9 @@ function computeNetEffect(ch) {
 function renderNetEffect(net) {
     const chips = formatStatChips(net, 1);
     if (!chips) {
-        return '<div class="persist-net"><span class="persist-net-label">Net effect</span><span class="persist-chip persist-chip-zero">ZERO</span></div>';
+        return '<div class="persist-net"><span class="persist-net-label">Modifiers</span><span class="persist-chip persist-chip-zero">ZERO</span></div>';
     }
-    return `<div class="persist-net"><span class="persist-net-label">Net effect</span>${chips}</div>`;
+    return `<div class="persist-net"><span class="persist-net-label">Modifiers</span>${chips}</div>`;
 }
 
 function renderCharacterCard(charId, ch) {

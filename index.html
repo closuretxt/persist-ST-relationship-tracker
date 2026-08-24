@@ -32,10 +32,15 @@
                     <input type="checkbox" id="persist_tracker_enabled" />
                     <span>Tracker LLM Pass</span>
                 </label>
-                <label class="checkbox_label" title="Include active statuses inside {{relationship_persistent}}">
-                    <input type="checkbox" id="persist_inject_statuses" />
-                    <span>Inject Statuses into Macro</span>
-                </label>
+                <div class="flex-container alignitemscenter" style="margin: 8px 0;" title="How much detail active statuses get inside {{relationship_persistent}}: Full = name, description and effect; Simple = name and effect; Name = only the name; None = statuses are not injected">
+                    <span style="min-width: 160px;">Status Inject Format:</span>
+                    <select id="persist_status_inject_format" class="text_pole flex1">
+                        <option value="full">Full (name, desc, effect)</option>
+                        <option value="simple">Simple (name, effect)</option>
+                        <option value="name">Name only</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
                 <div class="flex-container alignitemscenter" style="margin: 8px 0;" title="Full prompt wraps the data in <user_relationships> tags with an explanation for the LLM; Raw list injects only the bare character blocks">
                     <span style="min-width: 160px;">Macro Format:</span>
                     <select id="persist_injection_mode" class="text_pole flex1">

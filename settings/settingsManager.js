@@ -8,7 +8,8 @@ export const defaultSettings = {
     autorun: true, // Run the tracker automatically after AI messages
     trackerEnabled: true, // Whether the tracker LLM pass runs at all (injection can still work)
     contextDepth: 10, // How many past messages are sent to the tracker FOR CONTEXT ONLY
-    injectStatuses: true, // Include the <statuses> section inside {{relationship_persistent}}
+    injectStatuses: true, // Legacy: kept for migration; superseded by statusInjectFormat
+    statusInjectFormat: "full", // "full" = name+desc+effect; "simple" = name+effect; "name" = name only; "none" = no statuses injected
     injectionMode: "prompt", // "prompt" = wrapped in <user_relationships> with explanation; "raw" = bare list only
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
@@ -39,8 +40,8 @@ const TRACK_OPTIONS = [
 ];
 
 export function initSettingsListeners() {
-    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets").on("change", saveSettings);
-    $("#persist_injection_mode").on("change", saveSettings);
+    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets").on("change", saveSettings);
+    $("#persist_injection_mode, #persist_status_inject_format").on("change", saveSettings);
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
@@ -68,6 +69,8 @@ export async function loadSettings() {
     $("#persist_autorun").prop("checked", s.autorun);
     $("#persist_tracker_enabled").prop("checked", s.trackerEnabled);
     $("#persist_inject_statuses").prop("checked", s.injectStatuses);
+    $("#persist_status_inject_format").val(["full", "simple", "name", "none"].includes(s.statusInjectFormat) ? s.statusInjectFormat
+        : (s.injectStatuses === false ? "none" : "full")); // migrate legacy checkbox
     $("#persist_injection_mode").val(s.injectionMode === "raw" ? "raw" : "prompt");
     $("#persist_debug_mode").prop("checked", s.debug_mode);
     $("#persist_legacy_api").prop("checked", s.legacy_api);
@@ -100,7 +103,9 @@ export function saveSettings() {
     s.enabled = $("#persist_enabled").prop("checked");
     s.autorun = $("#persist_autorun").prop("checked");
     s.trackerEnabled = $("#persist_tracker_enabled").prop("checked");
-    s.injectStatuses = $("#persist_inject_statuses").prop("checked");
+    s.injectStatuses = $("#persist_status_inject_format").val() !== "none"; // legacy mirror
+    s.statusInjectFormat = ["full", "simple", "name", "none"].includes($("#persist_status_inject_format").val())
+        ? $("#persist_status_inject_format").val() : "full";
     s.injectionMode = $("#persist_injection_mode").val() === "raw" ? "raw" : "prompt";
     s.debug_mode = $("#persist_debug_mode").prop("checked");
     s.legacy_api = $("#persist_legacy_api").prop("checked");
