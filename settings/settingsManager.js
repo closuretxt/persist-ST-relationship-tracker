@@ -7,6 +7,7 @@ export const defaultSettings = {
     enabled: true, // Master switch for the whole extension
     autorun: true, // Run the tracker automatically after AI messages
     autoRunInterval: 1, // Run every X turns (a turn = one user+AI exchange); context adapts to include those turns
+    sendContextAsRoles: false, // Send history as separate user/assistant/system role messages instead of a text block
     trackerEnabled: true, // Whether the tracker LLM pass runs at all (injection can still work)
     contextDepth: 10, // How many past messages are sent to the tracker FOR CONTEXT ONLY
     injectStatuses: true, // Legacy: kept for migration; superseded by statusInjectFormat
@@ -18,7 +19,7 @@ export const defaultSettings = {
     debug_mode: false,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
-    injectWorldInfo: false, // Append the <world_info> block to the tracker context
+    injectWorldInfo: true, // Append the <world_info> block to the tracker context
     injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
@@ -41,7 +42,7 @@ const TRACK_OPTIONS = [
 ];
 
 export function initSettingsListeners() {
-    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets").on("change", saveSettings);
+    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets, #persist_send_context_as_roles").on("change", saveSettings);
     $("#persist_injection_mode, #persist_status_inject_format").on("change", saveSettings);
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
@@ -86,6 +87,7 @@ export async function loadSettings() {
     $("#persist_injection_mode").val(s.injectionMode === "raw" ? "raw" : "prompt");
     $("#persist_debug_mode").prop("checked", s.debug_mode);
     $("#persist_legacy_api").prop("checked", s.legacy_api);
+    $("#persist_send_context_as_roles").prop("checked", s.sendContextAsRoles === true);
     $("#persist_inject_world_info").prop("checked", s.injectWorldInfo === true);
     $("#persist_inject_wi_outlets").prop("checked", s.injectWIOutlets === true);
     $("#persist_context_depth").val(s.contextDepth ?? 10);
@@ -122,6 +124,7 @@ export function saveSettings() {
     s.injectionMode = $("#persist_injection_mode").val() === "raw" ? "raw" : "prompt";
     s.debug_mode = $("#persist_debug_mode").prop("checked");
     s.legacy_api = $("#persist_legacy_api").prop("checked");
+    s.sendContextAsRoles = $("#persist_send_context_as_roles").prop("checked");
     s.injectWorldInfo = $("#persist_inject_world_info").prop("checked");
     s.injectWIOutlets = $("#persist_inject_wi_outlets").prop("checked");
     s.contextDepth = parseInt($("#persist_context_depth").val(), 10) || 10;

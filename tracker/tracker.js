@@ -114,6 +114,49 @@ function buildContextBlock() {
     return block;
 }
 
+// History context as distinct role messages (Send Context as Roles mode).
+// Mirrors the Recast pattern: user messages -> "user", character messages ->
+// "assistant", system/ghost leftovers -> "system".
+function buildContextRoleMessages() {
+    const st = getST();
+    const settings = extension_settings[extensionName] || {};
+    const depth = Math.max(0, settings.contextDepth ?? 10);
+    const interval = getAutoRunInterval();
+
+    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
+    const targetCount = Math.min(visibleChat.length, interval * 2);
+    const history = visibleChat.slice(0, visibleChat.length - targetCount).slice(-depth);
+
+    const roleMessages = [];
+    for (const msg of history) {
+        const isUser = msg.is_user === true || msg.is_user === "true";
+        const isSystem = msg.is_system === true || msg.is_system === "true";
+        let role = "assistant";
+        if (isUser) role = "user";
+        if (isSystem) role = "system";
+        roleMessages.push({
+            role,
+            content: msg.name ? `${msg.name}: ${msg.mes}` : msg.mes,
+        });
+    }
+    return roleMessages;
+}
+
+// The imminent exchange(s) block, always sent as the final user message.
+function buildTargetBlock() {
+    const st = getST();
+    const interval = getAutoRunInterval();
+
+    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
+    const targetCount = Math.min(visibleChat.length, interval * 2);
+    const target = visibleChat.slice(-targetCount);
+
+    const targetLines = target.map(m => `${m.name || (m.is_user ? "User" : "Assistant")}: ${m.mes}`).join("\n\n");
+    const targetLabel = interval === 1 ? "the latest exchange" : `the latest ${interval} exchanges`;
+
+    return `<exchanges_to_analyze>\nAnalyze ${targetLabel}:\n\n${targetLines || "(no messages)"}\n</exchanges_to_analyze>`;
+}
+
 // Character card info: name, description and personality.
 function buildCharacterCardBlock() {
     const st = getST();
@@ -203,26 +246,36 @@ function hasUninitializedCharacters() {
 
 export async function buildTrackerMessages() {
     const settings = extension_settings[extensionName] || {};
-    const systemPrompt = substituteParams(
-        getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : "")
-    );
     const wiBlock = await buildWorldInfoBlock();
-    // Order: character card -> user persona -> world info -> scenario ->
-    // conversation context -> imminent exchanges (the messages to analyze).
-    const userPrompt = substituteParams(
+
+    // Preamble: everything that is NOT the conversation history. Always sent
+    // in the system role: tracker rules -> init rules -> character card ->
+    // persona -> world info -> scenario -> tracked state.
+    const preamble = substituteParams(
         [
+            getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : ""),
             buildCharacterCardBlock(),
             buildUserPersonaBlock(),
             wiBlock?.trimEnd(),
             buildScenarioBlock(),
             buildCurrentStateBlock(),
-            buildContextBlock(),
         ].filter(Boolean).join("\n\n")
     );
-    return [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-    ];
+
+    const messages = [{ role: "system", content: preamble }];
+
+    if (settings.sendContextAsRoles === true) {
+        // History as separate role messages, then the imminent exchange.
+        messages.push(...buildContextRoleMessages());
+        messages.push({ role: "user", content: substituteParams(buildTargetBlock()) });
+    } else {
+        // Everything in one user message: context block + imminent exchange.
+        messages.push({ role: "user", content: substituteParams(
+            [buildContextBlock(), buildTargetBlock()].filter(Boolean).join("\n\n")
+        ) });
+    }
+
+    return messages;
 }
 
 // ---------------------------------------------------------------------------
