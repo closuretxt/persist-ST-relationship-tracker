@@ -252,8 +252,21 @@
 }
 
 .persist_settings_content label.checkbox_label {
-    display: block;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.persist_settings_content label.checkbox_label input[type="checkbox"] {
+    margin: 0;
+    flex-shrink: 0;
+    width: auto;
+    height: auto;
+    appearance: auto;
+    -webkit-appearance: checkbox;
 }
 
 /* ===== Tracker Options Drawer ===== */
