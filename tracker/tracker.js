@@ -114,6 +114,29 @@ function buildContextBlock() {
     return block;
 }
 
+// Character card info: name, description and personality.
+function buildCharacterCardBlock() {
+    const st = getST();
+    const char = st.characters?.[st.characterId];
+    if (!char) return "";
+    const lines = [
+        char.name ? `Name: ${char.name}` : "",
+        char.description ? `Description: ${char.description}` : "",
+        char.personality ? `Personality: ${char.personality}` : "",
+    ].filter(Boolean);
+    if (lines.length === 0) return "";
+    return `<character>\n${lines.join("\n")}\n</character>`;
+}
+
+// The scenario of the chat, if set.
+function buildScenarioBlock() {
+    const st = getST();
+    const char = st.characters?.[st.characterId];
+    const scenario = String(char?.scenario ?? "").trim();
+    if (!scenario) return "";
+    return `<scenario>\n${scenario}\n</scenario>`;
+}
+
 // The {{user}} persona description, if the user has one set.
 function buildUserPersonaBlock() {
     const st = getST();
@@ -181,10 +204,17 @@ export async function buildTrackerMessages() {
         getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : "")
     );
     const wiBlock = await buildWorldInfoBlock();
-    const personaBlock = buildUserPersonaBlock();
-    const stateBlock = buildCurrentStateBlock();
+    // Order: character card -> user persona -> world info -> scenario ->
+    // conversation context -> imminent exchanges (the messages to analyze).
     const userPrompt = substituteParams(
-        [personaBlock, stateBlock, buildContextBlock(), wiBlock?.trimEnd()].filter(Boolean).join("\n\n")
+        [
+            buildCharacterCardBlock(),
+            buildUserPersonaBlock(),
+            wiBlock?.trimEnd(),
+            buildScenarioBlock(),
+            buildCurrentStateBlock(),
+            buildContextBlock(),
+        ].filter(Boolean).join("\n\n")
     );
     return [
         { role: "system", content: systemPrompt },
