@@ -95,3 +95,15 @@
         </div>
     </div>
 </div>
+
+<!-- Tracker Progress Bar (appended to <body> at startup) -->
+<div id="persist_progress_bar" style="display:none;">
+    <div style="display: flex; align-items: center; margin-bottom: 8px; position: relative;">
+        <div style="font-weight: bold; width: 100%; text-align: center;">→ Persist Tracker</div>
+        <button id="persist_stop_tracker" class="menu_button red_button" title="Stop Tracker" style="padding: 2px 6px; font-size: 0.8em; position: absolute; right: 0;"><i class="fa-solid fa-stop"></i></button>
+    </div>
+    <div id="persist_progress_text" style="margin-bottom: 8px; font-size: 0.9em; opacity: 0.8;">Initializing...</div>
+    <div style="width: 100%; background: rgba(0,0,0,0.3); border-radius: 10px; height: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+        <div id="persist_progress_fill" style="width: 0%; border-radius: 10px; background: linear-gradient(90deg, #e05a7a, #ff8fa3);"></div>
+    </div>
+</div>

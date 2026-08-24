@@ -4,7 +4,7 @@
 
 import { macros as macroSystem } from "../../../../macros/macro-system.js";
 import { extension_settings } from "../../../../extensions.js";
-import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState, computeDeltas } from "./state.js";
+import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange } from "./state.js";
 
 export const extensionName = "Persist";
 
@@ -193,15 +193,17 @@ export function initPanelHandlers() {
         const ch = getAllCharacters()[charId];
         const status = ch?.statuses[index];
         if (!status) return;
-        if (!status.disabled) {
-            const turn = Math.floor(Math.max(0, (window.SillyTavern?.getContext?.()?.chat?.length ?? 1) - 1) / 2);
-            status.disabled = true;
-            status.disabledSinceTurn = turn;
-        } else {
-            status.disabled = false;
-            status.disabledSinceTurn = null;
-        }
-        saveState();
+        // Re-apply the stat difference immediately so the bars update now.
+        adjustStatsForManualChange(ch, () => {
+            if (!status.disabled) {
+                const turn = Math.floor(Math.max(0, (window.SillyTavern?.getContext?.()?.chat?.length ?? 1) - 1) / 2);
+                status.disabled = true;
+                status.disabledSinceTurn = turn;
+            } else {
+                status.disabled = false;
+                status.disabledSinceTurn = null;
+            }
+        });
         refreshPersistPanel();
     });
 
@@ -210,8 +212,9 @@ export function initPanelHandlers() {
         const index = $(this).data("index");
         const ch = getAllCharacters()[charId];
         if (!ch) return;
-        ch.statuses.splice(index, 1);
-        saveState();
+        adjustStatsForManualChange(ch, () => {
+            ch.statuses.splice(index, 1);
+        });
         refreshPersistPanel();
     });
 }

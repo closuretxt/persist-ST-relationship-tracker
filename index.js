@@ -5,8 +5,10 @@ import { loadSettings, saveSettings, defaultSettings, initSettingsListeners } fr
 export { loadSettings, saveSettings, defaultSettings };
 
 // Tracker
-import { runTracker, resetTrackerGuard } from "./tracker/tracker.js";
+import { runTracker, resetTrackerGuard, cancelTracker } from "./tracker/tracker.js";
 import { registerInjectionMacro, refreshPersistPanel, initPanelHandlers } from "./tracker/injection.js";
+// UI
+import { pipelineBar } from "./ui/pipelineBar.js";
 
 // Setup
 export const extensionName = "Persist";
@@ -16,13 +18,18 @@ const extensionSettings = extension_settings[extensionName];
 // Startup
 jQuery(async () => {
     const settingsHtml = await $.get(`${extensionFolderPath}/index.html`);
-    $("#extensions_settings").append(settingsHtml);
+    const tempDiv = $("<div>").html(settingsHtml);
+
+    // The progress bar lives at <body> level so it can float over the whole app.
+    $("body").append(tempDiv.find("#persist_progress_bar"));
+    $("#extensions_settings").append(tempDiv.children());
 
     loadSettings();
     initSettingsListeners();
     registerInjectionMacro();
     initPanelHandlers();
     refreshPersistPanel();
+    pipelineBar.init(() => cancelTracker());
 
     const st = getContext();
 

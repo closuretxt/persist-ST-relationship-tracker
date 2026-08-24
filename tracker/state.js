@@ -225,6 +225,38 @@ export function computeDeltas(ch) {
     return deltas;
 }
 
+// Status-only portion of the deltas (no Saturation coupling/decay), used when
+// the user manually toggles/removes statuses so bars update instantly without
+// double-applying time effects.
+function statusOnlyDeltas(ch) {
+    const settings = getExtensionSettings();
+    const deltas = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
+    for (const status of ch.statuses) {
+        const weight = status.disabled ? 0.5 : 1;
+        for (const [key, value] of Object.entries(status.statEffects || {})) {
+            deltas[key] += value * weight;
+        }
+    }
+    for (const key of STAT_KEYS) {
+        deltas[key] = Math.round(capDelta(deltas[key], settings));
+    }
+    return deltas;
+}
+
+// Runs a manual status mutation (toggle/remove) and immediately re-applies the
+// difference to the stored stats so the bars update without waiting for the
+// next tracker run.
+export function adjustStatsForManualChange(ch, mutateFn) {
+    if (!ch) return;
+    const before = statusOnlyDeltas(ch);
+    mutateFn();
+    const after = statusOnlyDeltas(ch);
+    for (const key of STAT_KEYS) {
+        ch.stats[key] = clamp(ch.stats[key] + (after[key] - before[key]), 1, 100);
+    }
+    saveState();
+}
+
 // Advance time-based effects without any LLM output (called on every turn).
 export function tickState(turn) {
     const root = getStateRoot();

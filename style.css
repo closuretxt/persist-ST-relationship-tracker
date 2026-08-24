@@ -244,3 +244,107 @@
     font-style: italic;
     font-size: 0.9em;
 }
+
+/* ===== Panel ===== */
+
+.persist-panel {
+    padding: 10px;
+}
+
+.persist_settings_content label.checkbox_label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* ===== Tracker Progress Bar ===== */
+
+#persist_progress_bar {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--SmartThemeBlurTintColor, rgba(28, 28, 38, 0.92));
+    z-index: 10000;
+    padding: 12px 22px;
+    border-radius: 10px;
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    min-width: 300px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#persist_progress_fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        #e05a7a 0%,
+        #a04ae2 33%,
+        #4ae2c0 66%,
+        #e05a7a 100%
+    );
+    background-size: 200% 100%;
+    transition: width 0.35s ease;
+    animation: persist-gradient-shift 2.4s linear infinite;
+}
+
+@keyframes persist-gradient-shift {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+/* ===== Input Area Processing Indicator ===== */
+
+/* Ensure the form wrapper can anchor ::before */
+#form_sheld {
+    position: relative;
+}
+
+/* Animated gradient bar that runs across the top of the input box */
+#form_sheld.persist-input-active::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(
+        90deg,
+        #e05a7a 0%,
+        #a04ae2 33%,
+        #4ae2c0 66%,
+        #e05a7a 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 10px;
+    filter: brightness(1.2);
+    animation: persist-underline-sweep 1.8s linear infinite;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Soft glow emanating downward from the bar into the input area */
+#form_sheld.persist-input-active::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(
+        180deg,
+        rgba(224, 90, 122, 0.1) 0%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: persist-underline-sweep 2.4s linear infinite reverse;
+    pointer-events: none;
+    z-index: 999;
+}
+
+@keyframes persist-underline-sweep {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: -100% 50%; }
+}

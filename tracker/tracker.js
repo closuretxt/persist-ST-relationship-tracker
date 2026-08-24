@@ -16,11 +16,18 @@ import { swapProfile } from "../util/profileSwapper.js";
 import { getTrackerPrompt } from "../settings/defaultPrompt.js";
 import { getCurrentTurn, tickState, applyUpdate } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
+import { pipelineBar } from "../ui/pipelineBar.js";
 
 export const extensionName = "Persist";
 
 let isRunning = false;
+let isCancelled = false;
 let lastRunMessageId = -1; // Swipe/re-entry guard
+
+// Called by the pipeline bar's stop button.
+export function cancelTracker() {
+    isCancelled = true;
+}
 
 // ---------------------------------------------------------------------------
 // Prompt building
@@ -173,25 +180,38 @@ export async function runTracker(messageId = null) {
 
     isRunning = true;
     lastRunMessageId = effectiveMessageId;
+    isCancelled = false;
+
+    pipelineBar.start("Preparing tracker context...");
 
     try {
         const turn = getCurrentTurn(effectiveMessageId);
+        if (isCancelled) return { skipped: true, reason: "cancelled" };
 
         // Deterministic time-based effects for turns that passed without tracking.
         tickState(turn);
 
+        pipelineBar.setProgress(0.15, "Building tracker prompt...");
         const messages = buildTrackerMessages();
         const profileId = resolveConnectionProfile(st, settings.trackerProfile || "");
+        if (isCancelled) return { skipped: true, reason: "cancelled" };
+
+        pipelineBar.setProgress(0.25, "Tracker LLM is thinking...");
         const raw = await requestTracker(messages, profileId);
+        if (isCancelled) return { skipped: true, reason: "cancelled" };
+
+        pipelineBar.setProgress(0.75, "Parsing tracker response...");
         const cleaned = parse_reasoning(raw, profileId);
         logDebug("Tracker raw response:", cleaned);
 
         const updates = parseTrackerResponse(cleaned);
         if (!updates.length) {
             logDebug("No relationship update blocks found in tracker response.");
+            pipelineBar.complete("Nothing to update.");
             return { skipped: true, reason: "no_updates" };
         }
 
+        pipelineBar.setProgress(0.9, `Applying updates for ${updates.length} character(s)...`);
         for (const update of updates) {
             applyUpdate(update, turn);
         }
@@ -199,14 +219,17 @@ export async function runTracker(messageId = null) {
         const { refreshPersistPanel } = await import("./injection.js");
         refreshPersistPanel();
 
+        pipelineBar.complete();
         return { skipped: false, updates };
     } catch (error) {
         console.error("[Persist] Tracker error:", error);
         showErrorToast("Relationship Tracker", error);
+        pipelineBar.hide();
         lastRunMessageId = -1; // Allow retry on failure
         return { skipped: true, reason: "error", error };
     } finally {
         isRunning = false;
+        isCancelled = false;
     }
 }
 
