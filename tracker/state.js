@@ -25,7 +25,24 @@ export function getStateRoot() {
     if (!st.chatMetadata[STATE_KEY].characters) {
         st.chatMetadata[STATE_KEY].characters = {};
     }
+    migrateCharacters(st.chatMetadata[STATE_KEY].characters);
     return st.chatMetadata[STATE_KEY];
+}
+
+// Fill in any stat keys a character is missing (e.g. characters created
+// before a new stat was added to statDefinitions.js). Without this, old
+// characters would produce NaN as soon as the new stat is touched.
+function migrateCharacters(characters) {
+    const defaults = defaultStats();
+    for (const ch of Object.values(characters)) {
+        if (!ch || typeof ch !== "object") continue;
+        ch.stats = ch.stats || {};
+        for (const key of STAT_KEYS) {
+            if (!Number.isFinite(ch.stats[key])) {
+                ch.stats[key] = defaults[key];
+            }
+        }
+    }
 }
 
 // Stat keys currently enabled by the "Tracker" settings drawer. Disabled
