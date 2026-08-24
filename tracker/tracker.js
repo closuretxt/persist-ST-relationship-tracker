@@ -15,7 +15,7 @@ import {
 } from "../util/connectionProfiles.js";
 import { swapProfile } from "../util/profileSwapper.js";
 import { getTrackerPrompt } from "../settings/defaultPrompt.js";
-import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot } from "./state.js";
+import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot, getAllCharacters, enabledStatKeys, STAT_LABELS } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
 import { pipelineBar } from "../ui/pipelineBar.js";
 
@@ -42,6 +42,41 @@ function isGhostMessage(m) {
     if (m.is_hidden === true || m.is_hidden === "true") return true;
     if (!String(m.mes ?? "").trim()) return true;
     return false;
+}
+
+function buildCurrentStateBlock() {
+    const settings = extension_settings[extensionName] || {};
+    const characters = getAllCharacters();
+    const entries = Object.entries(characters);
+    if (entries.length === 0) return "";
+
+    const statKeys = enabledStatKeys();
+    const blocks = [];
+
+    for (const [charId, ch] of entries) {
+        const lines = [`<character_state name="${charId}">`];
+        lines.push("Stats:" + statKeys.map(k => `${STAT_LABELS[k]} ${ch.stats?.[k] ?? "?"}/100`).join(", "));
+        if (settings.trackMind !== false && ch.mind) lines.push(`Mind:${ch.mind}`);
+        if (settings.trackRelationship !== false && ch.relationship) lines.push(`Relationship:${ch.relationship}`);
+
+        const statuses = ch.statuses || [];
+        if (statuses.length > 0) {
+            lines.push("Existing statuses (you MUST reference these by exact name to edit/disable/remove them):");
+            for (const s of statuses) {
+                const deltas = Object.entries(s.statEffects || {})
+                    .filter(([k]) => statKeys.includes(k))
+                    .map(([k, v]) => `[${STAT_LABELS[k] ?? k}${v >= 0 ? "+" : ""}${v}]`)
+                    .join("");
+                lines.push(`- ${s.name} | ${s.type || "Neutral"}${s.disabled ? " | DISABLED" : ""} | ${s.description || s.effect || ""}${deltas ? ` | ${deltas}` : ""}`);
+            }
+        } else {
+            lines.push("Existing statuses: none.");
+        }
+        lines.push("</character_state>");
+        blocks.push(lines.join("\n"));
+    }
+
+    return `<current_state>\n${blocks.join("\n")}\n</current_state>`;
 }
 
 function buildContextBlock() {
@@ -120,7 +155,10 @@ export async function buildTrackerMessages() {
     const settings = extension_settings[extensionName] || {};
     const systemPrompt = substituteParams(getTrackerPrompt());
     const wiBlock = await buildWorldInfoBlock();
-    const userPrompt = substituteParams(buildContextBlock() + (wiBlock ? "\n\n" + wiBlock.trimEnd() : ""));
+    const stateBlock = buildCurrentStateBlock();
+    const userPrompt = substituteParams(
+        [stateBlock, buildContextBlock(), wiBlock?.trimEnd()].filter(Boolean).join("\n\n")
+    );
     return [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

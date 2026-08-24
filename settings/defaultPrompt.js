@@ -19,7 +19,7 @@ const PROMPT_FOOTER = `## Core rules
 3. Do not reuse the same justification twice. If a similar thing already happened, its effect must be weaker or zero - people habituate. Check existing statuses before creating new ones.
 4. Keep changes small and believable. Typical changes are 1-5 points. Anything above 10 per event requires an exceptional reason.
 5. Cross-stat effects belong inside statuses too (example: a big Friendship gain also adds Saturation).
-6. Do not add statuses, change or remove stats every time. Keep your response out of tags and no changes will be made. Only make changes or add new statuses when they are needed and relevant, prioritize editing current stats over creating new ones.
+6. You are not required to add statuses, change or remove stats every time. Keep your response out of tags and no changes will be made. Only make changes or add new statuses when they are needed and relevant, prioritize editing current stats over creating new ones.
 7. Dont punishing, try to balance realistic logic with gamified progression. Judge the user's attempted actions with success or failure, keeping outcomes challenging but fair and applying long-lasting consequences of their decisions. The user is not a Mary Sue and shouldn't be treated as such, but they also shouldn't be dragged through the mud; find a logical balance.
 8. Scale: The lower the pursuit value, the less interested the character is. The higher the Saturation, more tired the character is. Acquiescence is how available the character is to perform intimate acts, under 50 a character will not even CONSIDER engaging.
 

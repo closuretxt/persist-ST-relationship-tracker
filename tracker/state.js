@@ -157,6 +157,36 @@ function capDelta(delta, settings) {
     return clamp(delta, -cap, cap);
 }
 
+// Normalized name for fuzzy matching: lowercase, alphanumeric only.
+function normalizeName(name) {
+    return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+// Token-overlap similarity between two normalized names (0..1).
+function nameSimilarity(a, b) {
+    const tokensA = new Set((a.match(/[a-z0-9]+/g) || []));
+    const tokensB = new Set((b.match(/[a-z0-9]+/g) || []));
+    if (tokensA.size === 0 || tokensB.size === 0) return 0;
+    let overlap = 0;
+    for (const t of tokensA) if (tokensB.has(t)) overlap++;
+    return overlap / Math.min(tokensA.size, tokensB.size);
+}
+
+// Finds an existing status that is the same or a near-duplicate of the given
+// name. Exact normalized match, containment, or >=60% token overlap.
+function findSimilarStatus(ch, name) {
+    const target = normalizeName(name);
+    if (!target) return null;
+    for (const s of ch.statuses) {
+        const existing = normalizeName(s.name);
+        if (!existing) continue;
+        if (existing === target) return s;
+        if (existing.length >= 6 && (existing.includes(target) || target.includes(existing))) return s;
+        if (nameSimilarity(existing, target) >= 0.6) return s;
+    }
+    return null;
+}
+
 function findStatus(ch, name) {
     const target = String(name || "").trim().toLowerCase();
     return ch.statuses.find(s => s.name.trim().toLowerCase() === target) || null;
@@ -185,21 +215,26 @@ export function applyUpdate(update, turn) {
 
     // 1) Status lifecycle first.
     for (const op of update.newStatuses || []) {
-        const existing = findStatus(ch, op.fields.Name);
-        if (!existing) {
-            ch.statuses.push({
-                name: op.fields.Name || `Unnamed ${ch.statuses.length}`,
-                type: op.fields.Type || "Neutral",
-                description: op.fields.Description || "",
-                effect: op.fields.Effect || "",
-                removedOnlyIf: op.fields["Removed Only If"] || "",
-                statEffects: parseStatDeltas(op.fields.Stats),
-                date: op.fields.Date || `Turn ${turn}`,
-                createdTurn: turn,
-                disabled: false,
-                disabledSinceTurn: null,
-            });
+        // Duplicate guard: if a status with the same or a near-identical name
+        // already exists, treat the <new_status> as an EDIT of that status
+        // instead of piling up near-copies.
+        const similar = findSimilarStatus(ch, op.fields.Name);
+        if (similar) {
+            applyStatusFields(similar, { ...op.fields, Name: similar.name });
+            continue;
         }
+        ch.statuses.push({
+            name: op.fields.Name || `Unnamed ${ch.statuses.length}`,
+            type: op.fields.Type || "Neutral",
+            description: op.fields.Description || "",
+            effect: op.fields.Effect || "",
+            removedOnlyIf: op.fields["Removed Only If"] || "",
+            statEffects: parseStatDeltas(op.fields.Stats),
+            date: op.fields.Date || `Turn ${turn}`,
+            createdTurn: turn,
+            disabled: false,
+            disabledSinceTurn: null,
+        });
     }
 
     for (const op of update.editStatuses || []) {
