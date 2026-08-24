@@ -19,6 +19,7 @@ const PROMPT_FOOTER = `## Core rules
 3. Do not reuse the same justification twice. If a similar thing already happened, its effect must be weaker or zero - people habituate. Check existing statuses before creating new ones.
 4. Keep changes small and believable. Typical changes are 1-5 points. Anything above 10 per event requires an exceptional reason.
 5. Cross-stat effects belong inside statuses too (example: a big Friendship gain also adds Saturation).
+6. You don't NEED to add, change or remove stats every time. Keep your response out of tags and no changes will be made. Only make changes when they are needed and relevant.
 
 ## Statuses
 Statuses are persistent named effects, like passives:
