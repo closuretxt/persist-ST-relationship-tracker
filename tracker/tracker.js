@@ -114,6 +114,15 @@ function buildContextBlock() {
     return block;
 }
 
+// The {{user}} persona description, if the user has one set.
+function buildUserPersonaBlock() {
+    const st = getST();
+    const description = String(st?.persona?.[0]?.description ?? "").trim();
+    if (!description) return "";
+    const name = st.name1 || "{{user}}";
+    return `<user_persona>\n${description}\n</user_persona>`;
+}
+
 // Appends World Info (and/or WI outlets) to the user prompt, following the
 // Recast pattern: <world_info> block plus auto-appended <outlet> blocks.
 async function buildWorldInfoBlock() {
@@ -160,9 +169,10 @@ export async function buildTrackerMessages() {
     const settings = extension_settings[extensionName] || {};
     const systemPrompt = substituteParams(getTrackerPrompt());
     const wiBlock = await buildWorldInfoBlock();
+    const personaBlock = buildUserPersonaBlock();
     const stateBlock = buildCurrentStateBlock();
     const userPrompt = substituteParams(
-        [stateBlock, buildContextBlock(), wiBlock?.trimEnd()].filter(Boolean).join("\n\n")
+        [personaBlock, stateBlock, buildContextBlock(), wiBlock?.trimEnd()].filter(Boolean).join("\n\n")
     );
     return [
         { role: "system", content: systemPrompt },
