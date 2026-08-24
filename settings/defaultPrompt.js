@@ -44,7 +44,7 @@ For EVERY character whose state is relevant to the last exchange, output one blo
 
 <charname_relationship_update>
 Mind:One line about what this character currently thinks of their relationship with {{user}}.
-Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
+Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife). Add no metacommentary and be strict.
 <new_status>
 ...
 </new_status>
