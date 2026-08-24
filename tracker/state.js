@@ -184,6 +184,20 @@ export function applyUpdate(update, turn) {
     }
 
     // 2) Deterministic stat changes ONLY from statuses (never bare LLM deltas).
+    const deltas = computeDeltas(ch);
+
+    for (const key of STAT_KEYS) {
+        ch.stats[key] = clamp(ch.stats[key] + deltas[key], 1, 100);
+    }
+
+    saveState();
+}
+
+// Single source of truth for how a character's statuses translate into stat
+// deltas this turn. Used both by applyUpdate() and by the UI's "Net effect"
+// row so the displayed sum always matches what is actually applied.
+export function computeDeltas(ch) {
+    const settings = getExtensionSettings();
     const deltas = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
 
     // Disabled statuses keep affecting future trackers at half weight,
@@ -208,11 +222,7 @@ export function applyUpdate(update, turn) {
     const decay = (settings.saturationDecayPerTurn ?? 2) + Math.floor(ch.stats.pursuit / 25);
     deltas.saturation -= decay;
 
-    for (const key of STAT_KEYS) {
-        ch.stats[key] = clamp(ch.stats[key] + deltas[key], 1, 100);
-    }
-
-    saveState();
+    return deltas;
 }
 
 // Advance time-based effects without any LLM output (called on every turn).

@@ -4,7 +4,7 @@
 
 import { macros as macroSystem } from "../../../../macros/macro-system.js";
 import { extension_settings } from "../../../../extensions.js";
-import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState } from "./state.js";
+import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState, computeDeltas } from "./state.js";
 
 export const extensionName = "Persist";
 
@@ -103,21 +103,12 @@ function formatStatChips(statEffects, weight = 1) {
     return chips.join("");
 }
 
-// Sums every status's stat effects into the character's current net modifier.
-// With no active effects this is always exactly ZERO.
-function computeNetEffect(statuses) {
-    const net = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
-    for (const s of statuses || []) {
-        const weight = s.disabled ? 0.5 : 1;
-        for (const key of STAT_KEYS) {
-            net[key] += Math.round((s.statEffects?.[key] ?? 0) * weight * 10) / 10;
-        }
-    }
-    // Round away float dust so an empty set renders as clean zeros.
-    for (const key of STAT_KEYS) {
-        net[key] = Math.round(net[key]);
-    }
-    return net;
+// Builds the character's net stat modifier exactly the way the applier does
+// (via computeDeltas), so the displayed sum always matches reality.
+// With no statuses this is ZERO for every stat except the deterministic
+// Saturation decay, which is time-based rather than status-based.
+function computeNetEffect(ch) {
+    return computeDeltas(ch);
 }
 
 function renderNetEffect(net) {
@@ -174,7 +165,7 @@ function renderCharacterCard(charId, ch) {
             </div>
             ${ch.mind ? `<div class="persist-mind">"${escapeHtml(ch.mind)}"</div>` : ""}
             <div class="persist-stat-bars">${statBars}</div>
-            ${renderNetEffect(computeNetEffect(ch.statuses))}
+            ${renderNetEffect(computeNetEffect(ch))}
             <div class="persist-statuses-header">Statuses</div>
             ${statusItems || '<div class="persist-no-statuses">No statuses.</div>'}
         </div>`;
