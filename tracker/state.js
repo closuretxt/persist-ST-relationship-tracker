@@ -74,6 +74,10 @@ export function getOrCreateCharacter(charId, displayName = null) {
             relationship: "",
             statuses: [],
             turn: 0,
+            // false = the tracker LLM may still set ABSOLUTE starting values
+            // (pre-existing relationship: spouse, friend, enemy...). Flipped to
+            // true after the first successful update.
+            initialized: false,
         };
         root.characters[key] = ch;
     }
@@ -221,6 +225,21 @@ export function applyUpdate(update, turn) {
     // Disabled tracking options are never written.
     if (update.mind && settings.trackMind !== false) ch.mind = update.mind;
     if (update.relationship && settings.trackRelationship !== false) ch.relationship = update.relationship;
+
+    // 0) One-time initialization: for a character never tracked before, the
+    // tracker LLM may set ABSOLUTE starting stats reflecting a pre-existing
+    // relationship (spouse, childhood friend, enemy...). Only allowed while
+    // ch.initialized is false, and only for enabled stats.
+    if (update.initStats && !ch.initialized) {
+        const enabledKeys = enabledStatKeys();
+        for (const [label, value] of Object.entries(update.initStats)) {
+            const key = enabledKeys.find(k =>
+                (STAT_LABELS[k] || k).toLowerCase() === label.toLowerCase() || k.toLowerCase() === label.toLowerCase()
+            );
+            if (key) ch.stats[key] = clamp(value, 1, 100);
+        }
+    }
+    ch.initialized = true;
 
     // 1) Status lifecycle first.
     for (const op of update.newStatuses || []) {

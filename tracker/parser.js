@@ -46,6 +46,17 @@ function extractStatusBodies(text, regex) {
     return results;
 }
 
+// Parses "Label 75, Friendship 80" into { Romantic: 75, Friendship: 80 }.
+// Used by the one-time InitStats line for newly tracked characters.
+function parseInitStats(value) {
+    const result = {};
+    for (const part of String(value || "").split(/[,;]/)) {
+        const m = part.trim().match(/^([A-Za-z ]+?)\s*[:=]?\s*(\d{1,3})$/);
+        if (m) result[m[1].trim()] = parseInt(m[2], 10);
+    }
+    return Object.keys(result).length ? result : null;
+}
+
 function resolveCharId(tagName) {
     let id = tagName;
     if (/^charname$/i.test(id)) {
@@ -91,6 +102,7 @@ export function parseTrackerResponse(responseText, promptText = "") {
             displayName: charId,
             mind: outerFields.Mind || "",
             relationship: outerFields.Relationship || "",
+            initStats: outerFields.InitStats ? parseInitStats(outerFields.InitStats) : null,
             newStatuses: extractStatusBodies(body, NEW_STATUS_RE),
             editStatuses: extractStatusBodies(body, EDIT_STATUS_RE),
             disableStatuses: extractStatusBodies(body, DISABLE_STATUS_RE),

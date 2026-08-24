@@ -14,7 +14,7 @@ import {
     showErrorToast,
 } from "../util/connectionProfiles.js";
 import { swapProfile } from "../util/profileSwapper.js";
-import { getTrackerPrompt } from "../settings/defaultPrompt.js";
+import { getTrackerPrompt, INIT_RULES } from "../settings/defaultPrompt.js";
 import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot, getAllCharacters, enabledStatKeys, STAT_LABELS } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
 import { pipelineBar } from "../ui/pipelineBar.js";
@@ -54,7 +54,7 @@ function buildCurrentStateBlock() {
     const blocks = [];
 
     for (const [charId, ch] of entries) {
-        const lines = [`<character_state name="${charId}">`];
+        const lines = [`<character_state name="${charId}"${ch.initialized === false ? ' status="new"' : ""}>`];
         lines.push("Stats:" + statKeys.map(k => `${STAT_LABELS[k]} ${ch.stats?.[k] ?? "?"}/100`).join(", "));
         if (settings.trackMind !== false && ch.mind) lines.push(`Mind:${ch.mind}`);
         if (settings.trackRelationship !== false && ch.relationship) lines.push(`Relationship:${ch.relationship}`);
@@ -165,9 +165,21 @@ async function buildWorldInfoBlock() {
     }
 }
 
+// One-time initialization rules, appended to the system prompt only while
+// there is at least one character that has never been tracked (or the chat
+// has no tracked characters at all). Lets the LLM set realistic absolute
+// starting values for pre-existing relationships (spouse, friend, enemy...).
+function hasUninitializedCharacters() {
+    const characters = getAllCharacters();
+    const entries = Object.entries(characters);
+    return entries.length === 0 || entries.some(([, ch]) => ch.initialized === false);
+}
+
 export async function buildTrackerMessages() {
     const settings = extension_settings[extensionName] || {};
-    const systemPrompt = substituteParams(getTrackerPrompt());
+    const systemPrompt = substituteParams(
+        getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : "")
+    );
     const wiBlock = await buildWorldInfoBlock();
     const personaBlock = buildUserPersonaBlock();
     const stateBlock = buildCurrentStateBlock();

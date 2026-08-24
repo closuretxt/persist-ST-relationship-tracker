@@ -56,6 +56,19 @@ Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
 - Ignore background characters who did nothing relevant in the latest exchange.
 - Output NOTHING outside these blocks. No commentary, no markdown.`;
 
+// One-time initialization rules, appended to the tracker system prompt only
+// while there is at least one character that has never been tracked (or the
+// chat has no tracked characters at all). Lets the LLM set realistic absolute
+// starting values for pre-existing relationships (spouse, friend, enemy...).
+export const INIT_RULES = `## Initialization
+Some characters may already have a relationship with {{user}} before this chat even starts (a spouse, a childhood friend, a sworn enemy, a stranger...). For any character marked status="new" in <current_state>, or any character with no <character_state> at all, you MUST infer their realistic starting stats from ALL available context (persona, world info, conversation) and set them with ONE absolute line directly inside the update block:
+
+InitStats:Romantic 85, Friendship 90, Hate 2, Saturation 30, Pursuit 40, Acquiescence 60
+
+- Use this line ONLY for characters being tracked for the first time. Never use it for characters already present in <current_state> without the status="new" marker.
+- Set EVERY tracked stat. Base it on the established fiction: a wife starts with high Romantic/Friendship/Acquiescence; a stranger starts near the defaults; an enemy has high Hate. Saturation should reflect how recently they interacted, not zero by default.
+- After this first update the character is initialized; from then on only deltas via statuses are allowed.`;
+
 // Returns the default prompt with disabled tracking options stripped out, so
 // the tracker LLM only ever sees the options the user actually tracks.
 export function getTrackerPrompt() {
