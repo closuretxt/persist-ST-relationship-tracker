@@ -101,11 +101,20 @@ export function saveState() {
     }
 }
 
-// Wipes ALL tracked data for the current chat (characters, statuses, turns).
+// Wipes ALL tracked data for the current chat (characters, statuses, turns)
+// and strips every per-message snapshot, so the next tracker run starts from
+// scratch and re-triggers character initialization.
 export function resetChatState() {
     const st = getContext();
     if (!st?.chatMetadata) return false;
     st.chatMetadata[STATE_KEY] = { characters: {}, lastProcessedTurn: -1 };
+    if (Array.isArray(st.chat)) {
+        for (const msg of st.chat) {
+            if (msg?.extra?.persist_snapshot) {
+                delete msg.extra.persist_snapshot;
+            }
+        }
+    }
     saveState();
     return true;
 }
