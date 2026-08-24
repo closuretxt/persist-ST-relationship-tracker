@@ -1,6 +1,7 @@
 import { extension_settings } from "../../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../../script.js";
 import { extensionName } from "../index.js";
+import { STAT_DEFINITIONS, trackFlagFor } from "./statDefinitions.js";
 
 export const defaultSettings = {
     enabled: true, // Master switch for the whole extension
@@ -19,29 +20,30 @@ export const defaultSettings = {
     injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
-    trackRomantic: true,
-    trackFriendship: true,
-    trackHate: true,
-    trackSaturation: true,
-    trackPursuit: true,
+    // One flag per defined stat (generated) plus Mind/Relationship.
+    ...Object.fromEntries(STAT_DEFINITIONS.map(def => [trackFlagFor(def.key), true])),
     trackMind: true,
     trackRelationship: true,
 };
 
-const TRACK_OPTION_IDS = [
-    "persist_track_romantic",
-    "persist_track_friendship",
-    "persist_track_hate",
-    "persist_track_saturation",
-    "persist_track_pursuit",
-    "persist_track_mind",
-    "persist_track_relationship",
+// All trackable options (stats + non-stat fields), for dynamic UI and saving.
+const TRACK_OPTIONS = [
+    ...STAT_DEFINITIONS.map(def => ({
+        id: `persist_track_${def.key}`,
+        flag: trackFlagFor(def.key),
+        label: def.label,
+        title: `Track the ${def.label} stat`,
+    })),
+    { id: "persist_track_mind", flag: "trackMind", label: "Mind Line", title: "Track the Mind line (what the character thinks of the relationship)" },
+    { id: "persist_track_relationship", flag: "trackRelationship", label: "Relationship", title: "Track the Relationship name label" },
 ];
 
 export function initSettingsListeners() {
     $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets").on("change", saveSettings);
     $("#persist_injection_mode").on("change", saveSettings);
-    $(TRACK_OPTION_IDS.map(id => `#${id}`).join(", ")).on("change", saveSettings);
+    // Tracking toggles are rendered dynamically; use delegation so any stat
+    // added to statDefinitions.js works without touching this file.
+    $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
     $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
 
@@ -78,13 +80,17 @@ export async function loadSettings() {
 
     populateConnectionDropdown($("#persist_tracker_profile"), s.trackerProfile);
 
-    $(`#persist_track_romantic`).prop("checked", s.trackRomantic !== false);
-    $(`#persist_track_friendship`).prop("checked", s.trackFriendship !== false);
-    $(`#persist_track_hate`).prop("checked", s.trackHate !== false);
-    $(`#persist_track_saturation`).prop("checked", s.trackSaturation !== false);
-    $(`#persist_track_pursuit`).prop("checked", s.trackPursuit !== false);
-    $(`#persist_track_mind`).prop("checked", s.trackMind !== false);
-    $(`#persist_track_relationship`).prop("checked", s.trackRelationship !== false);
+    // Render the tracking toggles from the current stat definitions.
+    const $options = $("#persist_tracker_options");
+    $options.empty();
+    for (const opt of TRACK_OPTIONS) {
+        $options.append(
+            $("<label></label>").attr("title", opt.title).append(
+                $("<input type='checkbox'>").attr("id", opt.id).prop("checked", s[opt.flag] !== false),
+                $("<span></span>").text(opt.label),
+            )
+        );
+    }
 }
 
 export function saveSettings() {
@@ -105,13 +111,9 @@ export function saveSettings() {
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");
-    s.trackRomantic = $("#persist_track_romantic").prop("checked");
-    s.trackFriendship = $("#persist_track_friendship").prop("checked");
-    s.trackHate = $("#persist_track_hate").prop("checked");
-    s.trackSaturation = $("#persist_track_saturation").prop("checked");
-    s.trackPursuit = $("#persist_track_pursuit").prop("checked");
-    s.trackMind = $("#persist_track_mind").prop("checked");
-    s.trackRelationship = $("#persist_track_relationship").prop("checked");
+    for (const opt of TRACK_OPTIONS) {
+        s[opt.flag] = $(`#${opt.id}`).prop("checked");
+    }
 
     saveSettingsDebounced();
 }

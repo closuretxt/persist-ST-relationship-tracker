@@ -1,19 +1,19 @@
 // Persist default tracker system prompt.
 // Sent as the system message to the tracker LLM.
+// The "## Stats" section is generated from settings/statDefinitions.js so new
+// stats appear (and removed stats disappear) automatically.
 
 import { extension_settings } from "../../../../extensions.js";
+import { STAT_DEFINITIONS, trackFlagFor } from "./statDefinitions.js";
 
-export const DEFAULT_TRACKER_PROMPT = `You are a relationship state tracker for an interactive roleplay. You do NOT write story content. You analyze the latest exchange between {{user}} and the characters, then emit machine-readable relationship update blocks.
+// Everything before the stat bullets (intro + "## Stats" heading).
+const PROMPT_HEADER = `You are a relationship state tracker for an interactive roleplay. You do NOT write story content. You analyze the latest exchange between {{user}} and the characters, then emit machine-readable relationship update blocks.
 
 ## Stats
-Every tracked character has 5 stats, each ranging from 1 to 100:
-- Romantic: romantic intent and willingness. The best stat and the hardest to gain. Someone can be very close and willing without being romantic.
-- Friendship: how much of a friend they are; closely related to trust.
-- Hate: dislike towards {{user}}. It can coexist with any other stat (a wife may hate her husband; a tsundere may hate their crush). It carries long-lasting results of arguments.
-- Saturation: a cooldown meter. It RISES when other stats rise, and falls over time or through the character's own Pursuit. High Saturation means the character needs space; gains to other stats are less justified while it is high.
-- Pursuit: how willing this character is to pursue {{user}}. It DECREASES when they feel pursued, flattered, or pushed. Flattering them too much punishes this stat.
+`;
 
-## Core rules
+// Everything from "## Core rules" onward.
+const PROMPT_FOOTER = `## Core rules
 1. You NEVER set absolute values. You only report DELTAS, and ONLY inside status entries (see below). Bare deltas outside a <new_status> or <edit_status> block are forbidden.
 2. Every stat change must be JUSTIFIED by a persistent status effect. If nothing lasting comes from the interaction, stats do not change.
 3. Do not reuse the same justification twice. If a similar thing already happened, its effect must be weaker or zero - people habituate. Check existing statuses before creating new ones.
@@ -57,37 +57,33 @@ Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
 // the tracker LLM only ever sees the options the user actually tracks.
 export function getTrackerPrompt() {
     const s = extension_settings["Persist"] || {};
-    const lines = DEFAULT_TRACKER_PROMPT.split("\n");
-    const out = [];
 
-    for (const line of lines) {
-        // Skip stat bullets for disabled stats inside the "## Stats" list.
-        if (/^\s*- (Romantic|Friendship|Hate|Saturation|Pursuit):/.test(line)) {
-            const name = line.match(/^\s*- (\w+):/)[1].toLowerCase();
-            const flag = `track${name.charAt(0).toUpperCase() + name.slice(1)}`;
-            if (s[flag] === false) continue;
-        }
-        // Skip Mind/Relationship output-format lines when disabled.
-        if (s.trackMind === false && /^Mind:/.test(line.trim())) continue;
-        if (s.trackRelationship === false && /^Relationship:Current/.test(line.trim())) continue;
-        out.push(line);
+    // Enabled stats, in definition order.
+    const enabledStats = STAT_DEFINITIONS.filter(def => s[trackFlagFor(def.key)] !== false);
+
+    const statLines = [
+        `Every tracked character has ${enabledStats.length} tracked stat${enabledStats.length === 1 ? "" : "s"}, each ranging from 1 to 100:`,
+        ...enabledStats.map(def => `- ${def.prompt}`),
+    ];
+
+    const mindOff = s.trackMind === false;
+    const relOff = s.trackRelationship === false;
+
+    let footer = PROMPT_FOOTER;
+    // Drop the Mind/Relationship lines from the output format when disabled.
+    footer = footer.split("\n").filter(line => {
+        if (mindOff && line.trim().startsWith("Mind:")) return false;
+        if (relOff && line.trim().startsWith("Relationship:Current")) return false;
+        return true;
+    }).join("\n");
+    // Fix the rule line that references both fields.
+    if (mindOff && relOff) {
+        footer = footer.replace(/- Mind and Relationship[^\n]*/, "- The update block contains only the status entries.");
+    } else if (mindOff) {
+        footer = footer.replace(/Mind and Relationship/g, "Relationship");
+    } else if (relOff) {
+        footer = footer.replace(/Mind and Relationship/g, "Mind");
     }
 
-    let prompt = out.join("\n");
-
-    // Adjust the "Every tracked character has 5 stats" count.
-    const enabledStats = ["romantic", "friendship", "hate", "saturation", "pursuit"]
-        .filter(k => s[`track${k.charAt(0).toUpperCase() + k.slice(1)}`] !== false);
-    prompt = prompt.replace("Every tracked character has 5 stats, each ranging from 1 to 100:",
-        `Every tracked character has ${enabledStats.length} tracked stat${enabledStats.length === 1 ? "" : "s"}, each ranging from 1 to 100:`);
-
-    if (s.trackMind === false) {
-        prompt = prompt.replace(/\n- "charname"[^\n]*\n- Mind and Relationship[^\n]*/, "\n- \"charname\" in the tag is replaced by the character's name, e.g. <Livia_relationship_update>. Use the same exact name every turn; it is the persistent ID for that character.");
-        prompt = prompt.replace(/Mind and Relationship/g, "Relationship");
-    }
-    if (s.trackRelationship === false) {
-        prompt = prompt.replace(/Mind and Relationship/g, "Mind");
-    }
-
-    return prompt;
+    return PROMPT_HEADER + statLines.join("\n") + "\n\n" + footer;
 }

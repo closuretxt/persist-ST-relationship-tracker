@@ -2,15 +2,9 @@
 // State lives in chat_metadata.persist so it is saved/restored with the chat itself.
 
 import { getContext, extension_settings } from "../../../../extensions.js";
+import { STAT_DEFINITIONS, STAT_KEYS, STAT_LABELS, trackFlagFor } from "../settings/statDefinitions.js";
 
-export const STAT_KEYS = ["romantic", "friendship", "hate", "saturation", "pursuit"];
-export const STAT_LABELS = {
-    romantic: "Romantic",
-    friendship: "Friendship",
-    hate: "Hate",
-    saturation: "Saturation",
-    pursuit: "Pursuit",
-};
+export { STAT_KEYS, STAT_LABELS };
 
 const STATE_KEY = "persist";
 
@@ -38,14 +32,11 @@ export function getStateRoot() {
 // options are ignored everywhere: parsing, applier, injection and UI.
 export function enabledStatKeys() {
     const s = getExtensionSettings();
-    return STAT_KEYS.filter(key => {
-        const cap = key.charAt(0).toUpperCase() + key.slice(1);
-        return s[`track${cap}`] !== false;
-    });
+    return STAT_KEYS.filter(key => s[trackFlagFor(key)] !== false);
 }
 
 function defaultStats() {
-    return { romantic: 10, friendship: 10, hate: 1, saturation: 0, pursuit: 20 };
+    return Object.fromEntries(STAT_DEFINITIONS.map(s => [s.key, s.defaultValue]));
 }
 
 export function getOrCreateCharacter(charId, displayName = null) {
@@ -236,9 +227,13 @@ export function applyUpdate(update, turn) {
 // Single source of truth for how a character's statuses translate into stat
 // deltas this turn. Used both by applyUpdate() and by the UI's "Net effect"
 // row so the displayed sum always matches what is actually applied.
+function emptyDeltas() {
+    return Object.fromEntries(STAT_KEYS.map(k => [k, 0]));
+}
+
 export function computeDeltas(ch) {
     const settings = getExtensionSettings();
-    const deltas = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
+    const deltas = emptyDeltas();
 
     // Disabled statuses keep affecting future trackers at half weight,
     // but never the injected context (handled by injection.js).
@@ -278,7 +273,7 @@ export function computeDeltas(ch) {
 // double-applying time effects.
 function statusOnlyDeltas(ch) {
     const settings = getExtensionSettings();
-    const deltas = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
+    const deltas = emptyDeltas();
     const enabled = new Set(enabledStatKeys());
     for (const status of ch.statuses) {
         const weight = status.disabled ? 0.5 : 1;
