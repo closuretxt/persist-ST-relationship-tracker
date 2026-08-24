@@ -5,7 +5,7 @@
 export const DEFAULT_INJECTION_INTRO = `The following is persistent relationship data between {{user}} and the characters, tracked across the entire chat.
 
 - Stats range from 1 to 100 and are the AUTHORITATIVE ground truth for how each character feels. Treat these numbers as fact: they always override whatever is said or implied in the scene. If a character's words or narration contradict their stats, the stats win — portray the disconnect instead of following the claim (e.g. a character claiming to love {{user}} with low Romantic is lying, in denial, or mistaken).
-- The lower the pursuit value, the less interested the character is. The higher the Saturation, more tired the character is. Acquiescence is how available the character is to perform intimate acts.
+- The lower the pursuit value, the less interested the character is. The higher the Saturation, more tired the character is. Acquiescence is how available the character is to perform intimate acts, under 50 a character will not even CONSIDER engaging.
 - Statuses are lasting effects from past events that continue to influence each character until they are removed or disabled.
 - Keep your writing consistent with this data: characters must behave according to their current stats, mind state, relationship and active statuses, even when the scene suggests otherwise.
 - Do not repeat or quote this data verbatim in your reply.`;
