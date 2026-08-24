@@ -162,20 +162,31 @@ export async function runTracker(messageId = null) {
     }
 
     const st = getST();
-    const effectiveMessageId = messageId ?? st.chat.length - 1;
-    if (effectiveMessageId <= 0) {
+    const startId = messageId ?? st.chat.length - 1;
+    if (startId <= 0) {
         return { skipped: true, reason: "no_exchange" };
+    }
+
+    // Walk backwards from the requested message to find the most recent
+    // VALID target: an AI message that is not a ghost/system message.
+    // Ghost messages (and user messages) are ignored, not fatal.
+    let effectiveMessageId = -1;
+    for (let i = startId; i > 0; i--) {
+        const msg = st.chat[i];
+        if (!msg || msg.is_user) continue;
+        if (msg.is_system === true || msg.is_system === "true") continue;
+        effectiveMessageId = i;
+        break;
+    }
+    if (effectiveMessageId < 0) {
+        return { skipped: true, reason: "not_ai_message" };
+    }
+    if (effectiveMessageId !== startId) {
+        logDebug(`Message ${startId} is not a valid tracker target; falling back to message ${effectiveMessageId}.`);
     }
     if (effectiveMessageId === lastRunMessageId) {
         logDebug(`Message ${effectiveMessageId} already tracked (re-entry guard).`);
         return { skipped: true, reason: "already_tracked" };
-    }
-    const lastMsg = st.chat[effectiveMessageId];
-    if (!lastMsg || lastMsg.is_user) {
-        return { skipped: true, reason: "not_ai_message" };
-    }
-    if (lastMsg.is_system === true || lastMsg.is_system === "true") {
-        return { skipped: true, reason: "ghost_message" };
     }
 
     isRunning = true;
