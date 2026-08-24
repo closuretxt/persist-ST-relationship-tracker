@@ -1,7 +1,7 @@
 // Per-chat persistent state store + deterministic applier.
 // State lives in chat_metadata.persist so it is saved/restored with the chat itself.
 
-import { getContext, extension_settings } from "../../../extensions.js";
+import { getContext, extension_settings } from "../../../../extensions.js";
 
 export const STAT_KEYS = ["romantic", "friendship", "hate", "saturation", "pursuit"];
 export const STAT_LABELS = {

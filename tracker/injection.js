@@ -2,8 +2,8 @@
 // every tracked character's state as <charname_relationship> blocks.
 // Also renders the Persist character-state viewer panel.
 
-import { macros as macroSystem } from "../../../macros/macro-system.js";
-import { extension_settings } from "../../../extensions.js";
+import { macros as macroSystem } from "../../../../macros/macro-system.js";
+import { extension_settings } from "../../../../extensions.js";
 import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState } from "./state.js";
 
 export const extensionName = "Persist";

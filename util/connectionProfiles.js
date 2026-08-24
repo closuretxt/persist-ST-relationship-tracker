@@ -1,6 +1,6 @@
 // Connection Manager helpers, adapted from the Recast reference implementation.
 // Used so the Persist tracker LLM can run through a dedicated SillyTavern Connection profile.
-import { getContext, extension_settings } from "../../../extensions.js";
+import { getContext, extension_settings } from "../../../../extensions.js";
 
 export function logDebug(...args) {
     if (extension_settings?.Persist?.debug_mode) {
