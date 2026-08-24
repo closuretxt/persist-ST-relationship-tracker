@@ -86,14 +86,16 @@
                         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                     </div>
                     <div class="inline-drawer-content">
-                        <div style="opacity: 0.7; font-size: 0.9em; margin-bottom: 8px;" title="Disabled options are removed completely: they vanish from the tracker prompt, the injected macro and this panel.">Options that are turned off are not tracked at all.</div>
-                        <label class="checkbox_label" title="Track Romantic stat"><input type="checkbox" id="persist_track_romantic" /><span>Romantic</span></label>
-                        <label class="checkbox_label" title="Track Friendship stat"><input type="checkbox" id="persist_track_friendship" /><span>Friendship</span></label>
-                        <label class="checkbox_label" title="Track Hate stat"><input type="checkbox" id="persist_track_hate" /><span>Hate</span></label>
-                        <label class="checkbox_label" title="Track Saturation stat (also disables its coupling and decay)"><input type="checkbox" id="persist_track_saturation" /><span>Saturation</span></label>
-                        <label class="checkbox_label" title="Track Pursuit stat (also removes its Saturation-decay bonus)"><input type="checkbox" id="persist_track_pursuit" /><span>Pursuit</span></label>
-                        <label class="checkbox_label" title="Track the Mind line (what the character thinks of the relationship)"><input type="checkbox" id="persist_track_mind" /><span>Mind Line</span></label>
-                        <label class="checkbox_label" title="Track the Relationship name label"><input type="checkbox" id="persist_track_relationship" /><span>Relationship Name</span></label>
+                        <div style="opacity: 0.7; font-size: 0.9em; margin-bottom: 4px;" title="Disabled options are removed completely: they vanish from the tracker prompt, the injected macro and this panel.">Options that are turned off are not tracked at all.</div>
+                        <div id="persist_tracker_options">
+                            <label title="Track Romantic stat"><input type="checkbox" id="persist_track_romantic" /><span>Romantic</span></label>
+                            <label title="Track Friendship stat"><input type="checkbox" id="persist_track_friendship" /><span>Friendship</span></label>
+                            <label title="Track Hate stat"><input type="checkbox" id="persist_track_hate" /><span>Hate</span></label>
+                            <label title="Track Saturation stat (also disables its coupling and decay)"><input type="checkbox" id="persist_track_saturation" /><span>Saturation</span></label>
+                            <label title="Track Pursuit stat (also removes its Saturation-decay bonus)"><input type="checkbox" id="persist_track_pursuit" /><span>Pursuit</span></label>
+                            <label title="Track the Mind line (what the character thinks of the relationship)"><input type="checkbox" id="persist_track_mind" /><span>Mind Line</span></label>
+                            <label title="Track the Relationship name label"><input type="checkbox" id="persist_track_relationship" /><span>Relationship</span></label>
+                        </div>
                     </div>
                 </div>
 

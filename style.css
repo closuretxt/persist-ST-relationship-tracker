@@ -256,6 +256,59 @@
     margin-bottom: 5px;
 }
 
+/* ===== Tracker Options Drawer ===== */
+
+/* Compact toggle grid: checkbox and text side by side, two per row. */
+#persist_tracker_options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    margin-top: 6px;
+}
+
+#persist_tracker_options label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 0;
+}
+
+#persist_tracker_options label:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+#persist_tracker_options label input[type="checkbox"] {
+    margin: 0;
+    flex-shrink: 0;
+    width: auto;
+    height: auto;
+    appearance: auto;
+    -webkit-appearance: checkbox;
+}
+
+#persist_tracker_options label span {
+    font-size: 0.92em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 500px) {
+    #persist_tracker_options {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ===== Tracker Progress Bar ===== */
 
 #persist_progress_bar {
