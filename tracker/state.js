@@ -34,6 +34,16 @@ export function getStateRoot() {
     return st.chatMetadata[STATE_KEY];
 }
 
+// Stat keys currently enabled by the "Tracker" settings drawer. Disabled
+// options are ignored everywhere: parsing, applier, injection and UI.
+export function enabledStatKeys() {
+    const s = getExtensionSettings();
+    return STAT_KEYS.filter(key => {
+        const cap = key.charAt(0).toUpperCase() + key.slice(1);
+        return s[`track${cap}`] !== false;
+    });
+}
+
 function defaultStats() {
     return { romantic: 10, friendship: 10, hate: 1, saturation: 0, pursuit: 20 };
 }
@@ -94,6 +104,8 @@ export function parseStatDeltas(statsString) {
     while ((m = re.exec(String(statsString || ""))) !== null) {
         const key = String(m[1]).trim().toLowerCase();
         if (!STAT_KEYS.includes(key)) continue;
+        // Ignore deltas for stats that are not being tracked.
+        if (!enabledStatKeys().includes(key)) continue;
         const value = parseInt(m[2].replace(/\s+/g, ""), 10);
         if (Number.isFinite(value)) {
             deltas[key] = (deltas[key] || 0) + value;
@@ -133,8 +145,9 @@ export function applyUpdate(update, turn) {
     if (!ch) return;
 
     ch.turn = turn;
-    if (update.mind) ch.mind = update.mind;
-    if (update.relationship) ch.relationship = update.relationship;
+    // Disabled tracking options are never written.
+    if (update.mind && settings.trackMind !== false) ch.mind = update.mind;
+    if (update.relationship && settings.trackRelationship !== false) ch.relationship = update.relationship;
 
     // 1) Status lifecycle first.
     for (const op of update.newStatuses || []) {
@@ -183,10 +196,11 @@ export function applyUpdate(update, turn) {
         }
     }
 
-    // 2) Deterministic stat changes ONLY from statuses (never bare LLM deltas).
+    // 2) Deterministic stat changes ONLY from statuses (never bare LLM deltas),
+    // applied to enabled stats only.
     const deltas = computeDeltas(ch);
-
-    for (const key of STAT_KEYS) {
+    const enabledKeys = enabledStatKeys();
+    for (const key of enabledKeys) {
         ch.stats[key] = clamp(ch.stats[key] + deltas[key], 1, 100);
     }
 
@@ -202,9 +216,11 @@ export function computeDeltas(ch) {
 
     // Disabled statuses keep affecting future trackers at half weight,
     // but never the injected context (handled by injection.js).
+    const enabled = new Set(enabledStatKeys());
     for (const status of ch.statuses) {
         const weight = status.disabled ? 0.5 : 1;
         for (const [key, value] of Object.entries(status.statEffects || {})) {
+            if (!enabled.has(key)) continue; // untracked stat
             deltas[key] += value * weight;
         }
     }
@@ -213,14 +229,20 @@ export function computeDeltas(ch) {
         deltas[key] = Math.round(capDelta(deltas[key], settings));
     }
 
-    // Saturation rises when other stats rise (cooldown meter fills).
-    const positiveOthers = ["romantic", "friendship", "hate"]
-        .reduce((sum, k) => sum + Math.max(0, deltas[k]), 0);
-    deltas.saturation += Math.ceil(positiveOthers / 2);
+    if (settings.trackSaturation !== false) {
+        // Saturation rises when other stats rise (cooldown meter fills).
+        const positiveOthers = ["romantic", "friendship", "hate"]
+            .reduce((sum, k) => sum + Math.max(0, deltas[k]), 0);
+        deltas.saturation += Math.ceil(positiveOthers / 2);
 
-    // Saturation decays over time and faster with high Pursuit.
-    const decay = (settings.saturationDecayPerTurn ?? 2) + Math.floor(ch.stats.pursuit / 25);
-    deltas.saturation -= decay;
+        // Saturation decays over time and faster with high Pursuit.
+        const pursuitBonus = settings.trackPursuit === false ? 0 : Math.floor(ch.stats.pursuit / 25);
+        const decay = (settings.saturationDecayPerTurn ?? 2) + pursuitBonus;
+        deltas.saturation -= decay;
+    } else {
+        // Saturation disabled: never change it.
+        deltas.saturation = 0;
+    }
 
     return deltas;
 }
@@ -231,9 +253,11 @@ export function computeDeltas(ch) {
 function statusOnlyDeltas(ch) {
     const settings = getExtensionSettings();
     const deltas = { romantic: 0, friendship: 0, hate: 0, saturation: 0, pursuit: 0 };
+    const enabled = new Set(enabledStatKeys());
     for (const status of ch.statuses) {
         const weight = status.disabled ? 0.5 : 1;
         for (const [key, value] of Object.entries(status.statEffects || {})) {
+            if (!enabled.has(key)) continue; // untracked stat
             deltas[key] += value * weight;
         }
     }
@@ -268,9 +292,11 @@ export function tickState(turn) {
     const elapsed = previousTurn < 0 ? 0 : Math.max(1, turn - previousTurn);
 
     if (elapsed > 0) {
+        const saturationTracked = settings.trackSaturation !== false;
         for (const ch of Object.values(root.characters)) {
-            const decay = ((settings.saturationDecayPerTurn ?? 2) * elapsed)
-                + Math.floor(ch.stats.pursuit / 25);
+            if (!saturationTracked) continue;
+            const pursuitBonus = settings.trackPursuit === false ? 0 : Math.floor(ch.stats.pursuit / 25);
+            const decay = ((settings.saturationDecayPerTurn ?? 2) * elapsed) + pursuitBonus;
             ch.stats.saturation = clamp(ch.stats.saturation - decay, 1, 100);
         }
         saveState();

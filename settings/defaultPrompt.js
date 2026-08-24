@@ -1,6 +1,8 @@
 // Persist default tracker system prompt.
 // Sent as the system message to the tracker LLM.
 
+import { extension_settings } from "../../../../extensions.js";
+
 export const DEFAULT_TRACKER_PROMPT = `You are a relationship state tracker for an interactive roleplay. You do NOT write story content. You analyze the latest exchange between {{user}} and the characters, then emit machine-readable relationship update blocks.
 
 ## Stats
@@ -51,6 +53,41 @@ Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
 - Ignore background characters who did nothing relevant in the latest exchange.
 - Output NOTHING outside these blocks. No commentary, no markdown.`;
 
+// Returns the default prompt with disabled tracking options stripped out, so
+// the tracker LLM only ever sees the options the user actually tracks.
 export function getTrackerPrompt() {
-    return DEFAULT_TRACKER_PROMPT;
+    const s = extension_settings["Persist"] || {};
+    const lines = DEFAULT_TRACKER_PROMPT.split("\n");
+    const out = [];
+
+    for (const line of lines) {
+        // Skip stat bullets for disabled stats inside the "## Stats" list.
+        if (/^\s*- (Romantic|Friendship|Hate|Saturation|Pursuit):/.test(line)) {
+            const name = line.match(/^\s*- (\w+):/)[1].toLowerCase();
+            const flag = `track${name.charAt(0).toUpperCase() + name.slice(1)}`;
+            if (s[flag] === false) continue;
+        }
+        // Skip Mind/Relationship output-format lines when disabled.
+        if (s.trackMind === false && /^Mind:/.test(line.trim())) continue;
+        if (s.trackRelationship === false && /^Relationship:Current/.test(line.trim())) continue;
+        out.push(line);
+    }
+
+    let prompt = out.join("\n");
+
+    // Adjust the "Every tracked character has 5 stats" count.
+    const enabledStats = ["romantic", "friendship", "hate", "saturation", "pursuit"]
+        .filter(k => s[`track${k.charAt(0).toUpperCase() + k.slice(1)}`] !== false);
+    prompt = prompt.replace("Every tracked character has 5 stats, each ranging from 1 to 100:",
+        `Every tracked character has ${enabledStats.length} tracked stat${enabledStats.length === 1 ? "" : "s"}, each ranging from 1 to 100:`);
+
+    if (s.trackMind === false) {
+        prompt = prompt.replace(/\n- "charname"[^\n]*\n- Mind and Relationship[^\n]*/, "\n- \"charname\" in the tag is replaced by the character's name, e.g. <Livia_relationship_update>. Use the same exact name every turn; it is the persistent ID for that character.");
+        prompt = prompt.replace(/Mind and Relationship/g, "Relationship");
+    }
+    if (s.trackRelationship === false) {
+        prompt = prompt.replace(/Mind and Relationship/g, "Mind");
+    }
+
+    return prompt;
 }

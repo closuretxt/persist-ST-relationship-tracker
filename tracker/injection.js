@@ -4,7 +4,7 @@
 
 import { macros as macroSystem } from "../../../../macros/macro-system.js";
 import { extension_settings } from "../../../../extensions.js";
-import { getAllCharacters, STAT_KEYS, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange } from "./state.js";
+import { getAllCharacters, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange, enabledStatKeys } from "./state.js";
 
 export const extensionName = "Persist";
 
@@ -22,12 +22,12 @@ export function buildInjectionText() {
     const blocks = [];
 
     for (const [charId, ch] of Object.entries(characters)) {
-        const statLines = STAT_KEYS.map(k => formatStatLine(k, ch.stats[k]));
+        const statLines = enabledStatKeys().map(k => formatStatLine(k, ch.stats[k]));
         const lines = [];
         lines.push(`<${charId}_relationship>`);
         lines.push(...statLines);
-        if (ch.mind) lines.push(`Mind:${ch.mind}`);
-        if (ch.relationship) lines.push(`Relationship:${ch.relationship}`);
+        if (settings.trackMind !== false && ch.mind) lines.push(`Mind:${ch.mind}`);
+        if (settings.trackRelationship !== false && ch.relationship) lines.push(`Relationship:${ch.relationship}`);
 
         const activeStatuses = (ch.statuses || []).filter(s => !s.disabled);
         if (settings.injectStatuses !== false && activeStatuses.length > 0) {
@@ -92,7 +92,7 @@ function escapeHtml(text) {
 // Weight is applied for display purposes only (disabled statuses count half).
 function formatStatChips(statEffects, weight = 1) {
     const chips = [];
-    for (const key of STAT_KEYS) {
+    for (const key of enabledStatKeys()) {
         const value = statEffects?.[key];
         if (!value) continue;
         const weighted = Math.round(value * weight);
@@ -120,7 +120,8 @@ function renderNetEffect(net) {
 }
 
 function renderCharacterCard(charId, ch) {
-    const statBars = STAT_KEYS.map(key => {
+    const settings = extension_settings[extensionName] || {};
+    const statBars = enabledStatKeys().map(key => {
         const value = ch.stats[key] ?? 1;
         return `
             <div class="persist-stat-row">
@@ -161,9 +162,9 @@ function renderCharacterCard(charId, ch) {
         <div class="persist-character-card" data-char="${escapeHtml(charId)}">
             <div class="persist-character-header">
                 <span class="persist-character-name">${escapeHtml(ch.name || charId)}</span>
-                ${ch.relationship ? `<span class="persist-relationship-tag">${escapeHtml(ch.relationship)}</span>` : ""}
+                ${settings.trackRelationship !== false && ch.relationship ? `<span class="persist-relationship-tag">${escapeHtml(ch.relationship)}</span>` : ""}
             </div>
-            ${ch.mind ? `<div class="persist-mind">"${escapeHtml(ch.mind)}"</div>` : ""}
+            ${settings.trackMind !== false && ch.mind ? `<div class="persist-mind">"${escapeHtml(ch.mind)}"</div>` : ""}
             <div class="persist-stat-bars">${statBars}</div>
             ${renderNetEffect(computeNetEffect(ch))}
             <div class="persist-statuses-header">Statuses</div>

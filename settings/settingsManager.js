@@ -14,10 +14,30 @@ export const defaultSettings = {
     debug_mode: true,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
+    // Tracking options: turning one off removes it completely from the tracker
+    // prompt, parsing, state applier, injected macro and the panel UI.
+    trackRomantic: true,
+    trackFriendship: true,
+    trackHate: true,
+    trackSaturation: true,
+    trackPursuit: true,
+    trackMind: true,
+    trackRelationship: true,
 };
+
+const TRACK_OPTION_IDS = [
+    "persist_track_romantic",
+    "persist_track_friendship",
+    "persist_track_hate",
+    "persist_track_saturation",
+    "persist_track_pursuit",
+    "persist_track_mind",
+    "persist_track_relationship",
+];
 
 export function initSettingsListeners() {
     $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api").on("change", saveSettings);
+    $(TRACK_OPTION_IDS.map(id => `#${id}`).join(", ")).on("change", saveSettings);
     $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
 
@@ -50,6 +70,14 @@ export async function loadSettings() {
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
 
     populateConnectionDropdown($("#persist_tracker_profile"), s.trackerProfile);
+
+    $(`#persist_track_romantic`).prop("checked", s.trackRomantic !== false);
+    $(`#persist_track_friendship`).prop("checked", s.trackFriendship !== false);
+    $(`#persist_track_hate`).prop("checked", s.trackHate !== false);
+    $(`#persist_track_saturation`).prop("checked", s.trackSaturation !== false);
+    $(`#persist_track_pursuit`).prop("checked", s.trackPursuit !== false);
+    $(`#persist_track_mind`).prop("checked", s.trackMind !== false);
+    $(`#persist_track_relationship`).prop("checked", s.trackRelationship !== false);
 }
 
 export function saveSettings() {
@@ -67,6 +95,13 @@ export function saveSettings() {
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");
+    s.trackRomantic = $("#persist_track_romantic").prop("checked");
+    s.trackFriendship = $("#persist_track_friendship").prop("checked");
+    s.trackHate = $("#persist_track_hate").prop("checked");
+    s.trackSaturation = $("#persist_track_saturation").prop("checked");
+    s.trackPursuit = $("#persist_track_pursuit").prop("checked");
+    s.trackMind = $("#persist_track_mind").prop("checked");
+    s.trackRelationship = $("#persist_track_relationship").prop("checked");
 
     saveSettingsDebounced();
 }
