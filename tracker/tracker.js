@@ -234,6 +234,14 @@ export async function runTracker(messageId = null) {
         return { skipped: true, reason: "already_tracked" };
     }
 
+    // Skip short messages: nothing meaningful to track yet.
+    const minLen = settings.minMessageLength ?? 50;
+    const msgLength = String(st.chat[effectiveMessageId]?.mes ?? "").trim().length;
+    if (msgLength < minLen) {
+        logDebug(`Message ${effectiveMessageId} too short (${msgLength} < ${minLen} chars); skipping.`);
+        return { skipped: true, reason: "too_short" };
+    }
+
     isRunning = true;
     lastRunMessageId = effectiveMessageId;
     isCancelled = false;
