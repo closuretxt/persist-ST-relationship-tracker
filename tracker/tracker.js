@@ -2,6 +2,7 @@
 // profile via ConnectionManagerRequestService, parses the result, applies it.
 
 import { substituteParams } from "../../../../../script.js";
+import { power_user } from "../../../../power-user.js";
 import { getWorldInfoPrompt } from "../../../../world-info.js";
 import { extension_settings } from "../../../../extensions.js";
 import {
@@ -181,12 +182,14 @@ function buildScenarioBlock() {
 }
 
 // The {{user}} persona description, if the user has one set.
+// Lives in power_user.persona_descriptions[<default persona avatar>].description.
 function buildUserPersonaBlock() {
     const st = getST();
-    const description = String(st?.persona?.[0]?.description ?? "").trim();
+    const avatarId = power_user.default_persona || power_user.user_avatar;
+    const description = String(power_user?.persona_descriptions?.[avatarId]?.description ?? "").trim();
     if (!description) return "";
     const name = st.name1 || "{{user}}";
-    return `<user_persona>\n${description}\n</user_persona>`;
+    return `<user_persona>\nName: ${name}\n${description}\n</user_persona>`;
 }
 
 // Appends World Info (and/or WI outlets) to the user prompt, following the
