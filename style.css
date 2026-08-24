@@ -96,6 +96,8 @@
     height: 100%;
     border-radius: 6px;
     transition: width 0.4s ease;
+    /* Default color so custom stats without their own class are still visible. */
+    background: linear-gradient(90deg, #6b7a8f, #9fb4cc);
 }
 
 .persist-stat-romantic { background: linear-gradient(90deg, #e05a7a, #ff8fa3); }
@@ -103,6 +105,7 @@
 .persist-stat-hate { background: linear-gradient(90deg, #b03a2e, #ff7043); }
 .persist-stat-saturation { background: linear-gradient(90deg, #8e44ad, #c39bd3); }
 .persist-stat-pursuit { background: linear-gradient(90deg, #d4a017, #ffd76e); }
+.persist-stat-acquiescence { background: linear-gradient(90deg, #2e8b57, #7dd8a0); }
 
 /* Statuses */
 .persist-statuses-header {
