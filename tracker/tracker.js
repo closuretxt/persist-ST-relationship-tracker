@@ -352,6 +352,20 @@ export async function runTracker(messageId = null) {
 }
 
 export function runTrackerManual() {
+    const st = getST();
+
+    // If the latest message was already tracked (it carries a snapshot),
+    // imitate swipe behavior: roll the persistent memory back one turn,
+    // drop the stale snapshot and reset the guard so the run isn't a dupe.
+    const lastId = st.chat.length - 1;
+    const lastMsg = st.chat[lastId];
+    if (lastMsg && !lastMsg.is_user && lastMsg.extra?.persist_snapshot) {
+        clearMessageSnapshot(lastId);
+        restoreStateUpTo(lastId - 1);
+        resetTrackerGuard();
+        logDebug(`Manual run: rolled back state before message ${lastId}.`);
+    }
+
     if (typeof toastr !== "undefined") {
         toastr.info("Running relationship tracker...", "Persist");
     }
