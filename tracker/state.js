@@ -97,6 +97,15 @@ export function saveState() {
     }
 }
 
+// Wipes ALL tracked data for the current chat (characters, statuses, turns).
+export function resetChatState() {
+    const st = getContext();
+    if (!st?.chatMetadata) return false;
+    st.chatMetadata[STATE_KEY] = { characters: {}, lastProcessedTurn: -1 };
+    saveState();
+    return true;
+}
+
 // Current turn number. Message ID divided by 2, per spec.
 export function getCurrentTurn(messageId = null) {
     const st = getContext();

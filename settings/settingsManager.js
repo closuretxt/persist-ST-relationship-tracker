@@ -52,6 +52,17 @@ export function initSettingsListeners() {
         const { runTrackerManual } = await import("../tracker/tracker.js");
         runTrackerManual();
     });
+
+    $("#persist_reset_chat").on("click", async () => {
+        if (!window.confirm("Reset ALL tracked relationship data for this chat?\n\nEvery character's stats, mind, relationship and statuses will be deleted. This cannot be undone.")) return;
+        const state = await import("../tracker/state.js");
+        state.resetChatState();
+        const { refreshPersistPanel } = await import("../tracker/injection.js");
+        refreshPersistPanel();
+        if (typeof toastr !== "undefined") {
+            toastr.success("Chat tracking data reset.", "Persist");
+        }
+    });
 }
 
 export function getSettings() {
