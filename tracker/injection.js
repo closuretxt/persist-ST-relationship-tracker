@@ -5,6 +5,7 @@
 import { macros as macroSystem } from "../../../../macros/macro-system.js";
 import { extension_settings } from "../../../../extensions.js";
 import { getAllCharacters, STAT_LABELS, saveState, computeDeltas, adjustStatsForManualChange, enabledStatKeys } from "./state.js";
+import { getInjectionPrompt } from "../settings/defaultInjection.js";
 
 export const extensionName = "Persist";
 
@@ -40,10 +41,17 @@ export function buildInjectionText() {
         }
 
         lines.push(`</${charId}_relationship>`);
-        blocks.push(lines.join("\n")); 
+        blocks.push(lines.join("\n"));
     }
 
-    return blocks.join("\n");
+    const body = blocks.join("\n");
+
+    // "prompt" wraps the blocks in <user_relationships> with the default
+    // explanation; "raw" injects only the bare character blocks.
+    if (settings.injectionMode === "raw") {
+        return body;
+    }
+    return getInjectionPrompt(body);
 }
 
 export function registerInjectionMacro() {

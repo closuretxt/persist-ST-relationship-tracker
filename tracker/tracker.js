@@ -14,7 +14,7 @@ import {
 } from "../util/connectionProfiles.js";
 import { swapProfile } from "../util/profileSwapper.js";
 import { getTrackerPrompt } from "../settings/defaultPrompt.js";
-import { getCurrentTurn, tickState, applyUpdate } from "./state.js";
+import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
 import { pipelineBar } from "../ui/pipelineBar.js";
 
@@ -231,6 +231,7 @@ export async function runTracker(messageId = null) {
         refreshPersistPanel();
 
         pipelineBar.complete();
+        saveSnapshotToMessage(effectiveMessageId);
         return { skipped: false, updates };
     } catch (error) {
         console.error("[Persist] Tracker error:", error);
@@ -257,4 +258,44 @@ export function runTrackerManual() {
 
 export function resetTrackerGuard() {
     lastRunMessageId = -1;
+}
+
+// ---------------------------------------------------------------------------
+// Per-message snapshots (swipe / delete recovery)
+// ---------------------------------------------------------------------------
+
+// Attach the current Persist state to a message so the chat itself carries
+// the full history of relationship states.
+export function saveSnapshotToMessage(messageId) {
+    const st = getST();
+    const msg = st.chat?.[messageId];
+    if (!msg) return;
+    msg.extra = msg.extra || {};
+    msg.extra.persist_snapshot = createSnapshot();
+    if (typeof st.saveChat === "function") st.saveChat();
+}
+
+// Remove a message's own snapshot (e.g. before re-tracking after a swipe).
+export function clearMessageSnapshot(messageId) {
+    const st = getST();
+    const msg = st.chat?.[messageId];
+    if (msg?.extra?.persist_snapshot) {
+        delete msg.extra.persist_snapshot;
+        if (typeof st.saveChat === "function") st.saveChat();
+    }
+}
+
+// Restore the state as it was after the most recent snapshot at or before
+// messageId. Falls back to a clean state when no snapshot exists.
+export function restoreStateUpTo(messageId) {
+    const st = getST();
+    for (let i = messageId; i >= 0; i--) {
+        const snap = st.chat?.[i]?.extra?.persist_snapshot;
+        if (snap) {
+            restoreSnapshot(snap);
+            return true;
+        }
+    }
+    restoreSnapshot(null);
+    return false;
 }

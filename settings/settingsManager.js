@@ -8,6 +8,7 @@ export const defaultSettings = {
     trackerEnabled: true, // Whether the tracker LLM pass runs at all (injection can still work)
     contextDepth: 10, // How many past messages are sent to the tracker FOR CONTEXT ONLY
     injectStatuses: true, // Include the <statuses> section inside {{relationship_persistent}}
+    injectionMode: "prompt", // "prompt" = wrapped in <user_relationships> with explanation; "raw" = bare list only
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
     saturationDecayPerTurn: 2, // Deterministic JS-side Saturation decay per turn
@@ -37,6 +38,7 @@ const TRACK_OPTION_IDS = [
 
 export function initSettingsListeners() {
     $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_inject_statuses, #persist_debug_mode, #persist_legacy_api").on("change", saveSettings);
+    $("#persist_injection_mode").on("change", saveSettings);
     $(TRACK_OPTION_IDS.map(id => `#${id}`).join(", ")).on("change", saveSettings);
     $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
@@ -62,6 +64,7 @@ export async function loadSettings() {
     $("#persist_autorun").prop("checked", s.autorun);
     $("#persist_tracker_enabled").prop("checked", s.trackerEnabled);
     $("#persist_inject_statuses").prop("checked", s.injectStatuses);
+    $("#persist_injection_mode").val(s.injectionMode === "raw" ? "raw" : "prompt");
     $("#persist_debug_mode").prop("checked", s.debug_mode);
     $("#persist_legacy_api").prop("checked", s.legacy_api);
     $("#persist_context_depth").val(s.contextDepth ?? 10);
@@ -88,6 +91,7 @@ export function saveSettings() {
     s.autorun = $("#persist_autorun").prop("checked");
     s.trackerEnabled = $("#persist_tracker_enabled").prop("checked");
     s.injectStatuses = $("#persist_inject_statuses").prop("checked");
+    s.injectionMode = $("#persist_injection_mode").val() === "raw" ? "raw" : "prompt";
     s.debug_mode = $("#persist_debug_mode").prop("checked");
     s.legacy_api = $("#persist_legacy_api").prop("checked");
     s.contextDepth = parseInt($("#persist_context_depth").val(), 10) || 10;

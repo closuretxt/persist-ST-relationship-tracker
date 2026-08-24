@@ -5,7 +5,7 @@ import { loadSettings, saveSettings, defaultSettings, initSettingsListeners } fr
 export { loadSettings, saveSettings, defaultSettings };
 
 // Tracker
-import { runTracker, resetTrackerGuard, cancelTracker } from "./tracker/tracker.js";
+import { runTracker, resetTrackerGuard, cancelTracker, clearMessageSnapshot, restoreStateUpTo } from "./tracker/tracker.js";
 import { registerInjectionMacro, refreshPersistPanel, initPanelHandlers } from "./tracker/injection.js";
 // UI
 import { pipelineBar } from "./ui/pipelineBar.js";
@@ -55,6 +55,24 @@ jQuery(async () => {
 
         // Reload per-chat state and reset guards when the chat changes.
         st.eventSource.on(st.event_types.CHAT_CHANGED, () => {
+            resetTrackerGuard();
+            refreshPersistPanel();
+        });
+
+        // Swipe: roll state back to before this message, drop its stale
+        // snapshot, and let the tracker re-run on the new swipe generation.
+        st.eventSource.on(st.event_types.MESSAGE_SWIPED, async (messageId) => {
+            const id = messageId ?? (st.chat?.length ?? 1) - 1;
+            clearMessageSnapshot(id);
+            restoreStateUpTo(id - 1);
+            resetTrackerGuard();
+            refreshPersistPanel();
+        });
+
+        // Delete: restore the state of whatever message is now last.
+        st.eventSource.on(st.event_types.MESSAGE_DELETED, async () => {
+            const lastId = (st.chat?.length ?? 1) - 1;
+            restoreStateUpTo(lastId);
             resetTrackerGuard();
             refreshPersistPanel();
         });

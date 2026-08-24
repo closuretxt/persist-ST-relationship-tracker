@@ -36,6 +36,13 @@
                     <input type="checkbox" id="persist_inject_statuses" />
                     <span>Inject Statuses into Macro</span>
                 </label>
+                <div class="flex-container alignitemscenter" style="margin: 8px 0;" title="Full prompt wraps the data in <user_relationships> tags with an explanation for the LLM; Raw list injects only the bare character blocks">
+                    <span style="min-width: 160px;">Macro Format:</span>
+                    <select id="persist_injection_mode" class="text_pole flex1">
+                        <option value="prompt">Prompt (wrapped)</option>
+                        <option value="raw">Raw list</option>
+                    </select>
+                </div>
 
                 <div class="inline-drawer">
                     <div class="inline-drawer-toggle inline-drawer-header">

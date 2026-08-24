@@ -115,6 +115,32 @@ export function parseStatDeltas(statsString) {
 }
 
 // ---------------------------------------------------------------------------
+// Snapshots (for swipe / message-delete recovery)
+// ---------------------------------------------------------------------------
+
+// Deep copy of the current state root, stored on the tracked message itself.
+export function createSnapshot() {
+    const root = getStateRoot();
+    return {
+        version: 1,
+        lastProcessedTurn: root?.lastProcessedTurn ?? -1,
+        characters: structuredClone(root?.characters ?? {}),
+    };
+}
+
+// Replace the live state with a snapshot (or reset to empty when null).
+export function restoreSnapshot(snapshot) {
+    const st = getContext();
+    if (!st?.chatMetadata) return false;
+    const snap = snapshot && snapshot.characters
+        ? { version: 1, lastProcessedTurn: snapshot.lastProcessedTurn ?? -1, characters: structuredClone(snapshot.characters) }
+        : { version: 1, lastProcessedTurn: -1, characters: {} };
+    st.chatMetadata[STATE_KEY] = snap;
+    saveState();
+    return true;
+}
+
+// ---------------------------------------------------------------------------
 // Applier
 // ---------------------------------------------------------------------------
 
