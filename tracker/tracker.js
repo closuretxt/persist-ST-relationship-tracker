@@ -26,20 +26,33 @@ let lastRunMessageId = -1; // Swipe/re-entry guard
 // Prompt building
 // ---------------------------------------------------------------------------
 
+// Ghost/system messages (hidden narrator notes, injected system text, etc.)
+// must never reach the tracker prompt.
+function isGhostMessage(m) {
+    if (!m) return true;
+    if (m.is_system === true || m.is_system === "true") return true;
+    if (m.is_hidden === true || m.is_hidden === "true") return true;
+    if (!String(m.mes ?? "").trim()) return true;
+    return false;
+}
+
 function buildContextBlock() {
     const st = getST();
     const settings = extension_settings[extensionName] || {};
     const depth = Math.max(0, settings.contextDepth ?? 10);
 
-    // History FOR CONTEXT ONLY: everything except the latest exchange.
-    const historyEnd = st.chat.length - 1;
+    // Only real dialogue is eligible; drop ghosts/system/empty messages first.
+    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
+
+    // History FOR CONTEXT ONLY: everything before the latest visible exchange.
+    const historyEnd = visibleChat.length - 1;
     const historyStart = Math.max(0, historyEnd - depth);
-    const history = st.chat.slice(historyStart, historyEnd);
+    const history = visibleChat.slice(historyStart, historyEnd);
 
     const lines = history.map(m => `${m.name || (m.is_user ? "User" : "Assistant")}: ${m.mes}`).join("\n");
 
-    const lastUser = [...st.chat].reverse().find(m => m.is_user);
-    const lastAssistant = st.chat[st.chat.length - 1];
+    const lastUser = [...visibleChat].reverse().find(m => m.is_user);
+    const lastAssistant = [...visibleChat].reverse().find(m => !m.is_user);
 
     let block = "";
     if (lines.trim()) {
@@ -153,6 +166,9 @@ export async function runTracker(messageId = null) {
     const lastMsg = st.chat[effectiveMessageId];
     if (!lastMsg || lastMsg.is_user) {
         return { skipped: true, reason: "not_ai_message" };
+    }
+    if (lastMsg.is_system === true || lastMsg.is_system === "true") {
+        return { skipped: true, reason: "ghost_message" };
     }
 
     isRunning = true;

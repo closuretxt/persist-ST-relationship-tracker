@@ -33,6 +33,8 @@ jQuery(async () => {
             if (!extension_settings[extensionName]?.autorun) return;
             const msg = st.chat?.[messageId];
             if (!msg || msg.is_user) return;
+            // Ghost/system messages are not tracked.
+            if (msg.is_system === true || msg.is_system === "true") return;
             await runTracker(messageId);
         });
 

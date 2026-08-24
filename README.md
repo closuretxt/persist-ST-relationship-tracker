@@ -11,7 +11,7 @@ https://github.com/closuretxt/recast-post-processing
 
 ## About ST Post-Processing
 
-**Persist** or **ST Relationship Tracker** is a SillyTavern extension that adds persistent and logical behavior to a character.
+**Persist** or **ST Relationship Tracker** is a SillyTavern extension that adds persistent and logical behavior to a character. This is vibecoded.
 
 ⚠️ *This system makes use of multiple API calls, proceed at your own responsability and beware of usage costs.* ⚠️
 
