@@ -193,10 +193,12 @@ async function buildWorldInfoBlock() {
 // has no tracked characters at all). Lets the LLM set realistic absolute
 // starting values for pre-existing relationships (spouse, friend, enemy...).
 function hasUninitializedCharacters() {
-    // Only inject the initialization rules when an actual new character
-    // (status="new" in <current_state>) exists. No characters / all
-    // initialized -> no initialization section.
-    return Object.values(getAllCharacters()).some(ch => ch.initialized === false);
+    const characters = getAllCharacters();
+    const entries = Object.values(characters);
+    // Inject when an actual new character (status="new") exists, OR when
+    // nothing is tracked yet (first run: every character the LLM reports
+    // will be new and needs absolute starting values).
+    return entries.length === 0 || entries.some(ch => ch.initialized === false);
 }
 
 export async function buildTrackerMessages() {

@@ -61,11 +61,11 @@ Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
 // chat has no tracked characters at all). Lets the LLM set realistic absolute
 // starting values for pre-existing relationships (spouse, friend, enemy...).
 export const INIT_RULES = `## Initialization
-The character marked status="new" in <current_state> has a pre-existing relationship with {{user}} that has never been tracked before (a spouse, a childhood friend, a sworn enemy, a stranger...). Set their realistic starting stats with ONE absolute line directly inside that character's update block:
+Characters may have a pre-existing relationship with {{user}} that has never been tracked before (a spouse, a childhood friend, a sworn enemy, a stranger...). Any character marked status="new" in <current_state> - or any character you report when there is no <current_state> at all - is being tracked for the first time. For each such character, set their realistic starting stats with ONE absolute line directly inside that character's update block:
 
 InitStats:Romantic 30, Friendship 40, Hate 2, Saturation 30, Pursuit 40, Acquiescence 25
 
-- Use this line ONLY for characters marked status="new". Never use it for characters already present in <current_state> without the marker.
+- Use this line ONLY for first-time characters (status="new", or no <current_state> present). Never use it for characters already present in <current_state> without the marker.
 - Set EVERY tracked stat, and LOWBALL your estimates. Do not inflate values based on what the relationship is supposed to be: avoid positive bias and start conservative, the story itself will raise stats over time. A wife is not automatically at 90 Romantic; a "best friend" is not automatically maxed Friendship. When in doubt, pick the lower plausible value.
 - Base estimates on established fiction, but discount it: titles and history set a floor, not a ceiling. Negative or neutral stats (Hate, Saturation) may be higher than the rosy picture suggests.
 - After this first update the character is initialized; from then on only deltas via statuses are allowed.`;
