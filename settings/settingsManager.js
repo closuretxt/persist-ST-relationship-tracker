@@ -6,6 +6,7 @@ import { STAT_DEFINITIONS, trackFlagFor } from "./statDefinitions.js";
 export const defaultSettings = {
     enabled: true, // Master switch for the whole extension
     autorun: true, // Run the tracker automatically after AI messages
+    autoRunInterval: 1, // Run every X turns (a turn = one user+AI exchange); context adapts to include those turns
     trackerEnabled: true, // Whether the tracker LLM pass runs at all (injection can still work)
     contextDepth: 10, // How many past messages are sent to the tracker FOR CONTEXT ONLY
     injectStatuses: true, // Legacy: kept for migration; superseded by statusInjectFormat
@@ -45,7 +46,7 @@ export function initSettingsListeners() {
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
-    $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay").on("input change", saveSettings);
+    $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
 
     $("#persist_run_tracker").on("click", async () => {
@@ -91,6 +92,7 @@ export async function loadSettings() {
     $("#persist_max_stat_change").val(s.maxStatChangePerTurn ?? 15);
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
+    $("#persist_auto_run_interval").val(s.autoRunInterval ?? 1);
 
     populateConnectionDropdown($("#persist_tracker_profile"), s.trackerProfile);
 
@@ -126,6 +128,7 @@ export function saveSettings() {
     s.maxStatChangePerTurn = parseInt($("#persist_max_stat_change").val(), 10) || 15;
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
+    s.autoRunInterval = Math.max(1, parseInt($("#persist_auto_run_interval").val(), 10) || 1);
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");
     for (const opt of TRACK_OPTIONS) {
         s[opt.flag] = $(`#${opt.id}`).prop("checked");

@@ -79,33 +79,38 @@ function buildCurrentStateBlock() {
     return `<current_state>\n${blocks.join("\n")}\n</current_state>`;
 }
 
+// How many turns (user+AI exchanges) the tracker should analyze per run.
+function getAutoRunInterval() {
+    const settings = extension_settings[extensionName] || {};
+    return Math.max(1, parseInt(settings.autoRunInterval, 10) || 1);
+}
+
 function buildContextBlock() {
     const st = getST();
     const settings = extension_settings[extensionName] || {};
     const depth = Math.max(0, settings.contextDepth ?? 10);
+    const interval = getAutoRunInterval();
 
     // Only real dialogue is eligible; drop ghosts/system/empty messages first.
     const visibleChat = st.chat.filter(m => !isGhostMessage(m));
 
-    // History FOR CONTEXT ONLY: everything before the latest visible exchange.
-    const historyEnd = visibleChat.length - 1;
-    const historyStart = Math.max(0, historyEnd - depth);
-    const history = visibleChat.slice(historyStart, historyEnd);
+    // The action target: the last `interval` turns (a turn = user+AI pair).
+    // With interval=1 only the latest exchange is analyzed; with 2, the two.
+    const targetCount = Math.min(visibleChat.length, interval * 2);
+    const target = visibleChat.slice(-targetCount);
+    const history = visibleChat.slice(0, visibleChat.length - targetCount).slice(-depth);
 
-    const lines = history.map(m => `${m.name || (m.is_user ? "User" : "Assistant")}: ${m.mes}`).join("\n");
-
-    const lastUser = [...visibleChat].reverse().find(m => m.is_user);
-    const lastAssistant = [...visibleChat].reverse().find(m => !m.is_user);
+    const historyLines = history.map(m => `${m.name || (m.is_user ? "User" : "Assistant")}: ${m.mes}`).join("\n");
 
     let block = "";
-    if (lines.trim()) {
-        block += `<conversation_context>\n${lines}\n</conversation_context>\n\n`;
+    if (historyLines.trim()) {
+        block += `<conversation_context>\n${historyLines}\n</conversation_context>\n\n`;
     }
 
-    const userText = lastUser ? `${lastUser.name || "User"}: ${lastUser.mes}` : "(no user message)";
-    const assistantText = lastAssistant ? `${lastAssistant.name || "Character"}: ${lastAssistant.mes}` : "(no assistant message)";
+    const targetLines = target.map(m => `${m.name || (m.is_user ? "User" : "Assistant")}: ${m.mes}`).join("\n\n");
+    const targetLabel = interval === 1 ? "the latest exchange" : `the latest ${interval} exchanges`;
 
-    block += `<latest_exchange>\n${userText}\n\n${assistantText}\n</latest_exchange>`;
+    block += `<exchanges_to_analyze>\nAnalyze ${targetLabel}:\n\n${targetLines || "(no messages)"}\n</exchanges_to_analyze>`;
     return block;
 }
 

@@ -69,6 +69,10 @@
                             <span style="min-width: 160px;">Context Depth:</span>
                             <input type="number" id="persist_context_depth" class="text_pole flex1" value="10" min="0" max="100" step="1" />
                         </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Run the tracker automatically only every X turns. The context adapts: with 2, the tracker receives the last 2 exchanges to analyze.">
+                            <span style="min-width: 160px;">Auto run every (turns):</span>
+                            <input type="number" id="persist_auto_run_interval" class="text_pole flex1" value="1" min="1" max="50" step="1" />
+                        </div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Hard cap applied to any single stat change per tracker run">
                             <span style="min-width: 160px;">Max Stat Change / Turn:</span>
                             <input type="number" id="persist_max_stat_change" class="text_pole flex1" value="15" min="1" max="100" step="1" />
