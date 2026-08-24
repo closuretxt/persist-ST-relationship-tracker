@@ -40,7 +40,7 @@ export function buildInjectionText() {
         }
 
         lines.push(`</${charId}_relationship>`);
-        blocks.push(lines.join("\n"));
+        blocks.push(lines.join("\n")); 
     }
 
     return blocks.join("\n");
