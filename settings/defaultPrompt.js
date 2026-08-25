@@ -38,7 +38,7 @@ Date:DD/MM/YYYY(Turn N) - only if there is a CLEAR date in the fiction; otherwis
 Other operations:
 - <edit_status>Name:...</edit_status>: change fields of an existing status. All fields optional; unspecified fields stay unchanged. Use this to weaken or alter effects, including their Stats deltas.
 - <disable_status>Name:...</disable_status>: the status stops affecting injected context but KEEPS affecting future tracking until removed. Disabled statuses cannot be re-disabled.
-- <remove_status>Name:...</remove_status>: fully deletes a status. ONLY allowed if the status has been disabled for several turns AND the removal reason is VERY clear. Never remove something immediately after disabling it.
+- <remove_status>Name:...</remove_status>: fully deletes a status. ONLY allowed if the status is disabled and it's completely irrelevant.
 
 ## Output format
 For EVERY character whose state is relevant to the last exchange, output one block:
