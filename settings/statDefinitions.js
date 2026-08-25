@@ -34,7 +34,7 @@ export const STAT_DEFINITIONS = [
         key: "saturation",
         label: "Saturation",
         defaultValue: 0,
-        prompt: "Saturation: a cooldown meter. It RISES when other stats rise, and falls over time or through the character's own Pursuit. High Saturation means the character needs space; gains to other stats are less justified while it is high.",
+        prompt: "Saturation: a cooldown meter. Falls over time or through the character's own Pursuit. High Saturation means the character needs space; gains to other stats are less justified while it is high. Do not create Saturation gains yourself - the system applies them automatically.",
     },
     {
         key: "pursuit",

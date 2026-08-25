@@ -381,10 +381,12 @@ function computePendingDeltas(ch) {
 // effect) and computePendingDeltas() (actual application).
 function applySaturationRules(deltas, ch, settings) {
     if (settings.trackSaturation !== false) {
-        // Saturation rises when other stats rise (cooldown meter fills).
-        const positiveOthers = ["romantic", "friendship", "hate"]
-            .reduce((sum, k) => sum + Math.max(0, deltas[k]), 0);
-        deltas.saturation += Math.ceil(positiveOthers / 2);
+        // Saturation rises AUTOMATICALLY as other stats rise:
+        // Hate x3, Romantic x2, Friendship x1 (conflict tires the character
+        // out most, then intimacy, then friendly bonding).
+        deltas.saturation += Math.max(0, deltas.romantic || 0) * 2;
+        deltas.saturation += Math.max(0, deltas.hate || 0) * 3;
+        deltas.saturation += Math.max(0, deltas.friendship || 0) * 1;
 
         // Saturation decays over time and faster with high Pursuit.
         const pursuitBonus = settings.trackPursuit === false ? 0 : Math.floor(ch.stats.pursuit / 25);
