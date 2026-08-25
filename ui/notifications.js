@@ -34,7 +34,7 @@ export class PersistNotifications {
         return extension_settings[extensionName]?.notificationLevel || "reduced";
     }
 
-    show({ name, title, lines = [], icon = "fa-comment-dots", cls = "", duration = 5000 }) {
+    show({ name, title, detail = "", lines = [], icon = "fa-comment-dots", cls = "", duration = 7000 }) {
         this.init();
         const $card = $(`
             <div class="persist-notification ${cls}">
@@ -43,6 +43,7 @@ export class PersistNotifications {
                     <span class="persist-notification-name">${escapeHtml(name)}</span>
                     <span class="persist-notification-title">${escapeHtml(title)}</span>
                 </div>
+                ${detail ? `<div class="persist-notification-detail">${escapeHtml(detail)}</div>` : ""}
                 ${lines.length ? `<div class="persist-notification-lines">${lines.map(l =>
                     `<div class="persist-notification-line ${l.cls || ""}"><i class="fa-solid ${l.icon || "fa-circle"}"></i><span>${escapeHtml(l.text)}</span></div>`
                 ).join("")}</div>` : ""}
@@ -89,9 +90,10 @@ export class PersistNotifications {
             this.show({
                 name: event.name,
                 title: reducedLine(event),
+                lines: (event.newStatuses || []).map(s => ({ text: s })),
                 icon: reducedIcon(event),
                 cls: reducedCls(event),
-                duration: 5000,
+                duration: 9000,
             });
             return;
         }
@@ -139,46 +141,42 @@ function dominantStat(event) {
     return { key: bestKey, delta: bestVal };
 }
 
-function reducedLine(event) {
+function reducedLine(event, { skipStatusPart = false } = {}) {
     const { key, delta } = dominantStat(event);
-
-    // New statuses are always mentioned by name in Reduced mode.
-    const statusPart = (event.newStatuses || []).length
-        ? ` gained "${event.newStatuses.join('", "')}"`
-        : "";
 
     let line;
     switch (key) {
-        case "romantic":  line = delta > 0 ? "liked that." : "felt a distance grow."; break;
-        case "friendship":line = delta > 0 ? "enjoyed that." : "felt let down."; break;
-        case "hate":      line = delta > 0 ? "really didn't like that." : "cooled off a little."; break;
-        case "saturation":line = delta > 0 ? "needs some space." : "feels refreshed."; break;
-        case "pursuit":   line = delta > 0 ? "wants more." : "is backing off."; break;
-        default:          line = (event.newStatuses || []).length ? "" : "hardly reacted.";
+        case "romantic":   line = delta > 0 ? "liked that." : "felt a distance grow."; break;
+        case "friendship": line = delta > 0 ? "enjoyed that." : "felt let down."; break;
+        case "hate":       line = delta > 0 ? "really didn't like that." : "cooled off a little."; break;
+        default:           line = (event.newStatuses || []).length && delta === 0 ? "" : "will remember that.";
     }
+
+    if (skipStatusPart) return line || "will remember that.";
+
+    // New statuses are mentioned by name in Reduced mode.
+    const statusPart = (event.newStatuses || []).length
+        ? ` gained "${event.newStatuses.join('", "')}"` 
+        : "";
 
     return `${line}${statusPart}`.trim() || "will remember that.";
 }
 
 function reducedIcon(event) {
-    const { key } = dominantStat(event);
-    if ((event.newStatuses || []).length) return "fa-star";
+    const { key, delta } = dominantStat(event);
     switch (key) {
-        case "romantic": return "fa-heart";
-        case "friendship": return "fa-face-smile";
+        case "romantic": return delta > 0 ? "fa-heart" : "fa-heart-crack";
+        case "friendship": return "fa-user-group";
         case "hate": return "fa-heart-crack";
-        case "saturation": return "fa-battery-half";
-        case "pursuit": return "fa-bolt";
         default: return "fa-comment-dots";
     }
 }
 
 function reducedCls(event) {
     const { key, delta } = dominantStat(event);
-    if ((event.newStatuses || []).length && Math.abs(delta) < 3) return "status-new";
-    if (delta === 0) return "";
+    if (delta === 0 && !(event.newStatuses || []).length) return "";
     if (key === "hate") return delta > 0 ? "down" : "up";
-    return delta > 0 ? "up" : "down";
+    return delta >= 0 ? "up" : "down";
 }
 
 export const persistNotifications = new PersistNotifications();
