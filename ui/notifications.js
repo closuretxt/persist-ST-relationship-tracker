@@ -59,18 +59,17 @@ export class PersistNotifications {
             $card.fadeOut(300, () => $card.remove());
         }, duration);
     }
-}
 
-/**
- * event: {
- *   name, stats: {key: delta}, newStatuses: [names], editedStatuses: [names],
- *   disabledStatuses: [names], removedStatuses: [names],
- *   mindChanged: bool, relationshipChanged: bool
- * }
- */
-pushTrackerEvent(event); {
-    const level = this.getLevel();
-    if (level === "none") return;
+    /**
+     * event: {
+     *   name, stats: {key: delta}, newStatuses: [names], editedStatuses: [names],
+     *   disabledStatuses: [names], removedStatuses: [names],
+     *   mindChanged: bool, relationshipChanged: bool
+     * }
+     */
+    pushTrackerEvent(event) {
+        const level = this.getLevel();
+        if (level === "none") return;
 
     if (level === "reduced") {
         this.show({
@@ -108,6 +107,7 @@ pushTrackerEvent(event); {
         cls: "full",
         duration: 6000,
     });
+    }
 }
 
 // ---- "Reduced" flavor lines -------------------------------------------------
