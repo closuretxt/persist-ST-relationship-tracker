@@ -16,7 +16,7 @@ export const defaultSettings = {
     characterInjectionWindow: 10, // Inject only characters active in the last X turns (0 = inject everyone)
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
-    saturationDecayPerTurn: 2, // Deterministic JS-side Saturation decay per turn
+    saturationDecayPerTurn: 1, // Deterministic JS-side Saturation decay per turn
     debug_mode: false,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)

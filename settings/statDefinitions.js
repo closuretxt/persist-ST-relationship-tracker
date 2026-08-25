@@ -34,13 +34,13 @@ export const STAT_DEFINITIONS = [
         key: "saturation",
         label: "Saturation",
         defaultValue: 0,
-        prompt: "Saturation: a cooldown meter. Falls over time or through the character's own Pursuit. High Saturation means the character needs space; gains to other stats are less justified while it is high. Do not create Saturation gains yourself - the system applies them automatically.",
+        prompt: "Saturation: a cooldown meter. Falls over time or through the character's own Pursuit. High Saturation means the character needs space; gains to other stats are less justified while it is high.",
     },
     {
         key: "pursuit",
         label: "Pursuit",
         defaultValue: 20,
-        prompt: "Pursuit: how willing this character is to pursue {{user}}. It DECREASES when they feel pursued, flattered, or pushed. Flattering them too much punishes this stat.",
+        prompt: "Pursuit: how willing this character is to pursue {{user}}. It DECREASES when they feel pursued, flattered, or pushed and INCREASES when they are left alone, given space or feel left off. Flattering them too much punishes this stat.",
     },
     {
         key: "acquiescence",
