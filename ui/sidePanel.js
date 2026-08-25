@@ -9,18 +9,30 @@ import { extension_settings } from "../../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../../../script.js";
 
 const PANEL_KEY = "Persist";
-const isOpenSaved = () => extension_settings[PANEL_KEY]?.sidePanelOpen === true;
-const setIsOpenSaved = (value) => {
+const DEFAULT_POS = { width: 380, height: 560, top: null, left: null };
+
+function getSavedState() {
+    return extension_settings[PANEL_KEY] || {};
+}
+
+function savePanelState(patch) {
     if (!extension_settings[PANEL_KEY]) extension_settings[PANEL_KEY] = {};
-    extension_settings[PANEL_KEY].sidePanelOpen = value;
+    Object.assign(extension_settings[PANEL_KEY], patch);
     saveSettingsDebounced();
-};
+}
 
 export class PersistSidePanel {
     constructor() {
         this.$panel = null;
         this.isOpen = false;
-        this.pos = { width: 380, height: 560, top: null, left: null };
+        const saved = getSavedState();
+        // Restore size/position if previously saved, otherwise defaults.
+        this.pos = {
+            width: Number(saved.sidePanelWidth) || DEFAULT_POS.width,
+            height: Number(saved.sidePanelHeight) || DEFAULT_POS.height,
+            top: saved.sidePanelTop != null ? Number(saved.sidePanelTop) : null,
+            left: saved.sidePanelLeft != null ? Number(saved.sidePanelLeft) : null,
+        };
     }
 
     init() {
@@ -50,7 +62,7 @@ export class PersistSidePanel {
         this.refreshContent();
 
         // Restore last session state: reopen if the user left it open.
-        if (isOpenSaved()) {
+        if (getSavedState().sidePanelOpen === true) {
             this.open();
         }
     }
@@ -66,13 +78,13 @@ export class PersistSidePanel {
         this.refreshContent();
         this.$panel.fadeIn(150);
         this.isOpen = true;
-        setIsOpenSaved(true);
+        savePanelState({ sidePanelOpen: true });
     }
 
     close() {
         this.$panel.fadeOut(150);
         this.isOpen = false;
-        setIsOpenSaved(false);
+        savePanelState({ sidePanelOpen: false });
     }
 
     refreshContent(html) {
@@ -125,7 +137,11 @@ export class PersistSidePanel {
             this.$panel.css({ left, top });
         });
 
-        $(document).on("mouseup.persistSidePanel", () => { drag = null; });
+        $(document).on("mouseup.persistSidePanel", () => {
+            if (!drag) return;
+            drag = null;
+            savePanelState({ sidePanelTop: this.pos.top, sidePanelLeft: this.pos.left });
+        });
     }
 
     // --- resizing (corner handle) ---------------------------------------------
@@ -150,7 +166,11 @@ export class PersistSidePanel {
             this.$panel.css({ width: w, height: h });
         });
 
-        $(document).on("mouseup.persistSidePanelResize", () => { resize = null; });
+        $(document).on("mouseup.persistSidePanelResize", () => {
+            if (!resize) return;
+            resize = null;
+            savePanelState({ sidePanelWidth: this.pos.width, sidePanelHeight: this.pos.height });
+        });
     }
 
     // --- status actions (same behavior as the settings drawer) ---------------
