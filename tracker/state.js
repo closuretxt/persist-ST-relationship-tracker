@@ -403,9 +403,9 @@ function applySaturationRules(deltas, ch, settings) {
         // Saturation rises AUTOMATICALLY as other stats rise:
         // Hate x3, Romantic x2, Friendship x1 (conflict tires the character
         // out most, then intimacy, then friendly bonding).
-        deltas.saturation += Math.max(0, deltas.romantic || 0) * 2;
-        deltas.saturation += Math.max(0, deltas.hate || 0) * 3;
-        deltas.saturation += Math.max(0, deltas.friendship || 0) * 1;
+        deltas.saturation += Math.max(0, deltas.romantic || 0) * 5;
+        deltas.saturation += Math.max(0, deltas.hate || 0) * 6;
+        deltas.saturation += Math.max(0, deltas.friendship || 0) * 3;
 
         // Saturation decays over time and faster with high Pursuit.
         const pursuitBonus = settings.trackPursuit === false ? 0 : Math.floor(ch.stats.pursuit / 25);
