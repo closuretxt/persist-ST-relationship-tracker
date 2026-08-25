@@ -486,6 +486,37 @@ export async function runTracker(messageId = null) {
 
 export function runTrackerManual() {
     const st = getST();
+    const settings = extension_settings[extensionName] || {};
+
+    // Context sanity check: the tracker needs at least one full exchange
+    // (user + AI message) to analyze.
+    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
+    const interval = Math.max(1, parseInt(settings.autoRunInterval, 10) || 1);
+    const requiredMessages = interval * 2;
+
+    if (visibleChat.length < 2) {
+        if (typeof toastr !== "undefined") {
+            toastr.warning(
+                "Not enough context to run the tracker: there is no complete exchange (a user message and an AI message) in this chat yet.",
+                "Persist",
+                { timeOut: 8000 }
+            );
+        }
+        logDebug("Manual run aborted: no complete exchange available.");
+        return;
+    }
+
+    // Warn (but still run) when there is history, yet less than the full
+    // auto-run window is available.
+    if (visibleChat.length < requiredMessages) {
+        if (typeof toastr !== "undefined") {
+            toastr.warning(
+                `Only ${visibleChat.length} message(s) available but the tracker is set to analyze ${interval} turn(s) (${requiredMessages} messages). Running with what exists.`,
+                "Persist",
+                { timeOut: 8000 }
+            );
+        }
+    }
 
     // If the latest message was already tracked (it carries a snapshot),
     // imitate swipe behavior: roll the persistent memory back one turn,
