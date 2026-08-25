@@ -89,8 +89,8 @@ export class PersistNotifications {
 
             this.show({
                 name: event.name,
-                title: reducedLine(event),
-                lines: (event.newStatuses || []).map(s => ({ text: s })),
+                title: reducedLine(event, { skipStatusPart: true }),
+                lines: (event.newStatuses || []).map(s => ({ text: s, icon: "fa-tag", cls: "status-new" })),
                 icon: reducedIcon(event),
                 cls: reducedCls(event),
                 duration: 9000,
@@ -149,7 +149,10 @@ function reducedLine(event, { skipStatusPart = false } = {}) {
         case "romantic":   line = delta > 0 ? "liked that." : "felt a distance grow."; break;
         case "friendship": line = delta > 0 ? "enjoyed that." : "felt let down."; break;
         case "hate":       line = delta > 0 ? "really didn't like that." : "cooled off a little."; break;
-        default:           line = (event.newStatuses || []).length && delta === 0 ? "" : "will remember that.";
+        default:
+            line = delta === 0 && (event.newStatuses || []).length
+                ? "revealed a new side of themselves."
+                : "will remember that.";
     }
 
     if (skipStatusPart) return line || "will remember that.";
