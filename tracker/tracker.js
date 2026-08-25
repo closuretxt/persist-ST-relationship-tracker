@@ -298,16 +298,23 @@ export async function buildTrackerMessages() {
     );
 
     const messages = [{ role: "system", content: preamble }];
+    const stateBlock = substituteParams(buildCurrentStateBlock());
 
     if (settings.sendContextAsRoles === true) {
         // History as separate role messages, then the imminent exchange.
         messages.push(...buildContextRoleMessages());
         messages.push({ role: "user", content: substituteParams(buildTargetBlock()) });
     } else {
-        // Everything in one user message: context block + imminent exchange.
+        // Single user message: context block + imminent exchange.
         messages.push({ role: "user", content: substituteParams(
             [buildContextBlock(), buildTargetBlock()].filter(Boolean).join("\n\n")
         ) });
+    }
+
+    // The tracked state always comes last, as its own message, so it sits
+    // after the exchanges to analyze and stays clearly separated.
+    if (stateBlock) {
+        messages.push({ role: "user", content: stateBlock });
     }
 
     return messages;
