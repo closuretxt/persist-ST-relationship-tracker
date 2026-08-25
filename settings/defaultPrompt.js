@@ -36,9 +36,9 @@ Date:DD/MM/YYYY(Turn N) - only if there is a CLEAR date in the fiction; otherwis
 </new_status>
 
 Other operations:
-- <edit_status>Name:...</edit_status>: change fields of an existing status. All fields optional; unspecified fields stay unchanged. Use this to weaken or alter effects, including their Stats deltas.
-- <disable_status>Name:...</disable_status>: the status stops affecting injected context but KEEPS affecting future tracking until removed. Disabled statuses cannot be re-disabled.
-- <remove_status>Name:...</remove_status>: fully deletes a status. ONLY allowed if the status is disabled and it's completely irrelevant.
+- <edit_status>Name:...</edit_status>: change fields of an existing status. All fields optional; unspecified fields stay unchanged. Use this to weaken or alter effects, including their Stats deltas. The Name field MUST be copied EXACTLY as it appears in <current_state> - never paraphrase, abbreviate or reword it. If you are unsure of the exact name, re-read <current_state> and copy it character for character; an edit with a mismatched name is discarded.
+- <disable_status>Name:...</disable_status>: the status stops affecting injected context but KEEPS affecting future tracking until removed. Disabled statuses cannot be re-disabled. Same rule: use the EXACT name from <current_state>.
+- <remove_status>Name:...</remove_status>: fully deletes a status. ONLY allowed if the status is disabled and it's completely irrelevant. Same rule: use the EXACT name from <current_state>.
 
 ## Output format
 For EVERY character whose state is relevant to the last exchange, output one block:
