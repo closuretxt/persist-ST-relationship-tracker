@@ -499,33 +499,6 @@
 
 /* ===== Floating Side Panel (tracked characters drawer) ===== */
 
-#persist_side_panel_toggle {
-    position: fixed;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 9995;
-    width: 34px;
-    height: 56px;
-    border-radius: 8px 0 0 8px;
-    background: var(--SmartThemeBlurTintColor, rgba(28, 28, 38, 0.9));
-    border: 1px solid var(--SmartThemeBorderColor, #444);
-    border-right: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--SmartThemeBodyColor, #eee);
-    opacity: 0.55;
-    transition: opacity 0.2s ease, padding-right 0.2s ease;
-}
-
-#persist_side_panel_toggle:hover,
-#persist_side_panel_toggle.active {
-    opacity: 1;
-    padding-right: 2px;
-}
-
 #persist_side_panel {
     position: fixed;
     z-index: 9996;
@@ -576,11 +549,11 @@
 
 #persist_side_panel_resize {
     position: absolute;
-    left: 0;
+    right: 0;
     bottom: 0;
     width: 16px;
     height: 16px;
-    cursor: nesw-resize;
+    cursor: nwse-resize;
     background:
         linear-gradient(135deg, transparent 50%, var(--SmartThemeBorderColor, #666) 50%, var(--SmartThemeBorderColor, #666) 60%, transparent 60%, transparent 70%, var(--SmartThemeBorderColor, #666) 70%, var(--SmartThemeBorderColor, #666) 80%, transparent 80%);
 }

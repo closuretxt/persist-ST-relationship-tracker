@@ -59,6 +59,10 @@ export function initSettingsListeners() {
         runTrackerManual();
     });
 
+    $("#persist_toggle_side_panel").on("click", async () => {
+        const { toggleSidePanel } = await import("../ui/sidePanel.js");
+        toggleSidePanel();
+    });
     $("#persist_reset_chat").on("click", async () => {
         if (!window.confirm("Reset ALL tracked relationship data for this chat?\n\nEvery character's stats, mind, relationship and statuses will be deleted. This cannot be undone.")) return;
         const state = await import("../tracker/state.js");

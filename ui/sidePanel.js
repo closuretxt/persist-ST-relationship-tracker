@@ -16,9 +16,6 @@ export class PersistSidePanel {
         if (this.$panel) return;
 
         $("body").append(`
-            <div id="persist_side_panel_toggle" title="Toggle tracked characters panel">
-                <i class="fa-solid fa-users"></i>
-            </div>
             <div id="persist_side_panel" style="display:none;">
                 <div id="persist_side_panel_header">
                     <i class="fa-solid fa-users"></i>
@@ -34,7 +31,6 @@ export class PersistSidePanel {
 
         this.$panel = $("#persist_side_panel");
 
-        $("#persist_side_panel_toggle").on("click", () => this.toggle());
         $("#persist_side_panel_close").on("click", () => this.close());
 
         this.initDrag();
@@ -52,13 +48,11 @@ export class PersistSidePanel {
         this.applyPosition();
         this.refreshContent();
         this.$panel.fadeIn(150);
-        $("#persist_side_panel_toggle").addClass("active");
         this.isOpen = true;
     }
 
     close() {
         this.$panel.fadeOut(150);
-        $("#persist_side_panel_toggle").removeClass("active");
         this.isOpen = false;
     }
 
@@ -179,6 +173,11 @@ export class PersistSidePanel {
 
 export function refreshSidePanel(html) {
     persistSidePanel.refreshContent(html);
+}
+
+export function toggleSidePanel() {
+    persistSidePanel.init();
+    persistSidePanel.toggle();
 }
 
 export function initSidePanel() {
