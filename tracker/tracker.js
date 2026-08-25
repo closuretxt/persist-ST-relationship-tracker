@@ -284,16 +284,16 @@ export async function buildTrackerMessages() {
     const wiBlock = await buildWorldInfoBlock();
 
     // Preamble: everything that is NOT the conversation history. Always sent
-    // in the system role: tracker rules -> init rules -> character card ->
-    // persona -> world info -> scenario -> tracked state.
+    // in the system role: tracked state first, then tracker rules -> init
+    // rules -> character card -> persona -> world info -> scenario.
     const preamble = substituteParams(
         [
             getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : ""),
+            buildCurrentStateBlock(),
             buildCharacterCardBlock(),
             buildUserPersonaBlock(),
             wiBlock?.trimEnd(),
             buildScenarioBlock(),
-            buildCurrentStateBlock(),
         ].filter(Boolean).join("\n\n")
     );
 
