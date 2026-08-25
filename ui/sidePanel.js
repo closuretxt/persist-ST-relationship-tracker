@@ -1,9 +1,20 @@
 // Persist floating side panel: the tracked-characters drawer as a movable,
-// resizable window docked to the right side of the screen. Toggled via a tab
-// on the right edge.
+// resizable window docked to the right side of the screen. Opened/closed via
+// the "Tracked Characters" button in the extension settings; the open state
+// persists across reloads.
 
 import { getAllCharacters, adjustStatsForManualChange } from "../tracker/state.js";
 import { renderCharacterCard } from "../tracker/injection.js";
+import { extension_settings } from "../../../../extensions.js";
+import { saveSettingsDebounced } from "../../../../../../script.js";
+
+const PANEL_KEY = "Persist";
+const isOpenSaved = () => extension_settings[PANEL_KEY]?.sidePanelOpen === true;
+const setIsOpenSaved = (value) => {
+    if (!extension_settings[PANEL_KEY]) extension_settings[PANEL_KEY] = {};
+    extension_settings[PANEL_KEY].sidePanelOpen = value;
+    saveSettingsDebounced();
+};
 
 export class PersistSidePanel {
     constructor() {
@@ -37,6 +48,11 @@ export class PersistSidePanel {
         this.initResize();
         this.initHandlers();
         this.refreshContent();
+
+        // Restore last session state: reopen if the user left it open.
+        if (isOpenSaved()) {
+            this.open();
+        }
     }
 
     toggle() {
@@ -45,15 +61,18 @@ export class PersistSidePanel {
 
     open() {
         this.init();
+        if (this.isOpen) return;
         this.applyPosition();
         this.refreshContent();
         this.$panel.fadeIn(150);
         this.isOpen = true;
+        setIsOpenSaved(true);
     }
 
     close() {
         this.$panel.fadeOut(150);
         this.isOpen = false;
+        setIsOpenSaved(false);
     }
 
     refreshContent(html) {

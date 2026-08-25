@@ -24,6 +24,7 @@ export const defaultSettings = {
     injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
     showPipelineOnAutoRun: false, // Show the progress bar for automatic tracker runs too (manual runs always show it)
     notificationLevel: "reduced", // Tracker change popups: "all" | "reduced" | "none"
+    sidePanelOpen: false, // Whether the floating tracked-characters panel was left open
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
     // One flag per defined stat (generated) plus Mind/Relationship.

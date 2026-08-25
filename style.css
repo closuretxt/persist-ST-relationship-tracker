@@ -501,7 +501,7 @@
 
 #persist_side_panel {
     position: fixed;
-    z-index: 9996;
+    z-index: 100;
     display: flex;
     flex-direction: column;
     background: var(--SmartThemeBlurTintColor, rgba(24, 24, 34, 0.95));
