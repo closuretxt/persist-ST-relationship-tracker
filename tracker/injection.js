@@ -148,7 +148,7 @@ function renderNetEffect(net) {
     return `<div class="persist-net"><span class="persist-net-label">Modifiers</span>${chips}</div>`;
 }
 
-function renderCharacterCard(charId, ch) {
+export function renderCharacterCard(charId, ch) {
     const settings = extension_settings[extensionName] || {};
     const statBars = enabledStatKeys().map(key => {
         const value = ch.stats[key] ?? 1;
@@ -203,17 +203,19 @@ function renderCharacterCard(charId, ch) {
 
 export function refreshPersistPanel() {
     const container = $("#persist_character_panel");
-    if (container.length === 0) return;
-
     const characters = getAllCharacters();
     const entries = Object.entries(characters);
+    const emptyHtml = '<div class="persist-empty">No tracked characters yet. Talk to a character or run the tracker manually.</div>';
+    const html = entries.length === 0
+        ? emptyHtml
+        : entries.map(([id, ch]) => renderCharacterCard(id, ch)).join("");
 
-    if (entries.length === 0) {
-        container.html('<div class="persist-empty">No tracked characters yet. Talk to a character or run the tracker manually.</div>');
-        return;
+    if (container.length > 0) {
+        container.html(html);
     }
 
-    container.html(entries.map(([id, ch]) => renderCharacterCard(id, ch)).join(""));
+    // Keep the floating side panel in sync (dynamic import avoids a cycle).
+    import("../ui/sidePanel.js").then(({ refreshSidePanel }) => refreshSidePanel(html)).catch(() => {});
 }
 
 export function initPanelHandlers() {

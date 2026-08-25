@@ -9,6 +9,7 @@ import { runTracker, resetTrackerGuard, cancelTracker, clearMessageSnapshot, res
 import { registerInjectionMacro, refreshPersistPanel, initPanelHandlers } from "./tracker/injection.js";
 // UI
 import { pipelineBar } from "./ui/pipelineBar.js";
+import { initSidePanel } from "./ui/sidePanel.js";
 
 // Setup
 export const extensionName = "Persist";
@@ -30,6 +31,7 @@ jQuery(async () => {
     initPanelHandlers();
     refreshPersistPanel();
     pipelineBar.init(() => cancelTracker());
+    initSidePanel();
 
     const st = getContext();
 
