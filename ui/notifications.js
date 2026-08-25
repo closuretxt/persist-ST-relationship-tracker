@@ -125,20 +125,24 @@ function dominantStat(event) {
 }
 
 function reducedLine(event) {
-    const hasStatus = (event.newStatuses || []).length > 0;
     const { key, delta } = dominantStat(event);
 
-    if (hasStatus && !key) return "will remember that.";
-    if (hasStatus && Math.abs(delta) < 3) return `gained "${event.newStatuses[0]}".`;
+    // New statuses are always mentioned by name in Reduced mode.
+    const statusPart = (event.newStatuses || []).length
+        ? ` gained "${event.newStatuses.join('", "')}"`
+        : "";
 
+    let line;
     switch (key) {
-        case "romantic":  return delta > 0 ? "liked that." : "felt a distance grow.";
-        case "friendship":return delta > 0 ? "enjoyed that." : "felt let down.";
-        case "hate":      return delta > 0 ? "really didn't like that." : "cooled off a little.";
-        case "saturation":return delta > 0 ? "needs some space." : "feels refreshed.";
-        case "pursuit":   return delta > 0 ? "wants more." : "is backing off.";
-        default:          return "hardly reacted.";
+        case "romantic":  line = delta > 0 ? "liked that." : "felt a distance grow."; break;
+        case "friendship":line = delta > 0 ? "enjoyed that." : "felt let down."; break;
+        case "hate":      line = delta > 0 ? "really didn't like that." : "cooled off a little."; break;
+        case "saturation":line = delta > 0 ? "needs some space." : "feels refreshed."; break;
+        case "pursuit":   line = delta > 0 ? "wants more." : "is backing off."; break;
+        default:          line = (event.newStatuses || []).length ? "" : "hardly reacted.";
     }
+
+    return `${line}${statusPart}`.trim() || "will remember that.";
 }
 
 function reducedIcon(event) {
