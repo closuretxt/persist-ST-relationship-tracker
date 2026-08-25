@@ -40,6 +40,13 @@ Other operations:
 - <disable_status>Name:...</disable_status>: the status stops affecting injected context but KEEPS affecting future tracking until removed. Disabled statuses cannot be re-disabled. Same rule: use the EXACT name from <current_state>.
 - <remove_status>Name:...</remove_status>: fully deletes a status. ONLY allowed if the status is disabled and it's completely irrelevant. Same rule: use the EXACT name from <current_state>.
 
+## How stat changes are applied
+Statuses are persistent passives: their Stats deltas are applied to the character's stats ONCE, when the status is created, and then keep counting automatically every turn. You never need to restate them.
+- In <edit_status>, OMIT the Stats: field unless you specifically want that status's numbers to change. An edit without a Stats: line keeps the current deltas exactly as they are.
+- If you DO include Stats: in an edit, the system applies only the DIFFERENCE between the new values and the old ones. Writing the same values again changes nothing. Writing a lower value REMOVES points from that stat.
+- Therefore: never rewrite Stats values for freshness, variety or emphasis. Only change them when the story genuinely makes the lasting effect stronger or weaker.
+- Only edit a status at all when its meaning, strength or removal condition actually changed in the fiction. Rewording a description alone is not a reason to edit.
+
 ## Output format
 For EVERY character whose state is relevant to the last exchange, output one block:
 
