@@ -16,7 +16,7 @@ const PROMPT_HEADER = `You are a relationship state tracker for an interactive r
 const PROMPT_FOOTER = `## Core rules
 1. You NEVER set absolute values. You only report DELTAS, and ONLY inside status entries (see below). Bare deltas outside a <new_status> or <edit_status> block are forbidden.
 2. Every stat change must be JUSTIFIED by a persistent status effect. If nothing lasting comes from the interaction, stats do not change.
-3. Do not reuse the same justification twice. If a similar thing already happened, its effect must be weaker or zero - people habituate. Check existing statuses before creating new ones.
+3. Do not reuse the same justification twice. If a similar thing already happened, its effect must be weaker or zero - people habituate. Check existing statuses and consider editing them before creating new ones.
 4. Keep changes small and believable. Typical changes are 1-5 points. Anything above 10 per event requires an exceptional reason.
 5. Cross-stat effects belong inside statuses too (example: a big Friendship gain also adds Saturation).
 6. You are not required to add statuses, change or remove stats every time. Keep your response out of tags and no changes will be made. Only make changes or add new statuses when they are needed and relevant, prioritize editing current stats over creating new ones.
