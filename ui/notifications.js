@@ -53,11 +53,19 @@ export class PersistNotifications {
         while (this.container.children().length > 6) {
             this.container.children().first().remove();
         }
-        $card.hide().fadeIn(200);
 
+        // Entrance is handled by the CSS animation; exit via a transition class.
         setTimeout(() => {
-            $card.fadeOut(300, () => $card.remove());
+            $card.addClass("out");
+            setTimeout(() => $card.remove(), 400);
         }, duration);
+    }
+
+    // Stats noisy enough (or mechanical enough) to never be notified on their own.
+    static NOTIFY_EXCLUDED_STATS = new Set(["saturation", "pursuit"]);
+
+    notifyStats(event) {
+        return Object.entries(event.stats || {}).filter(([key]) => !PersistNotifications.NOTIFY_EXCLUDED_STATS.has(key));
     }
 
     /**
@@ -71,42 +79,48 @@ export class PersistNotifications {
         const level = this.getLevel();
         if (level === "none") return;
 
-    if (level === "reduced") {
+        if (level === "reduced") {
+            // Skip pure saturation/pursuit churn: only notify when something
+            // meaningful (romantic/friendship/hate or a status) happened.
+            const meaningful = this.notifyStats(event).some(([, delta]) => delta !== 0)
+                || (event.newStatuses || []).length > 0;
+            if (!meaningful) return;
+
+            this.show({
+                name: event.name,
+                title: reducedLine(event),
+                icon: reducedIcon(event),
+                cls: reducedCls(event),
+                duration: 5000,
+            });
+            return;
+        }
+
+        // "all": full breakdown card.
+        const lines = [];
+        for (const [key, delta] of this.notifyStats(event)) {
+            if (!delta) continue;
+            const meta = STAT_META[key] || { label: key, icon: "fa-circle", cls: "neutral" };
+            const sign = delta > 0 ? "+" : "";
+            lines.push({ text: `${sign}${delta} ${meta.label}`, icon: meta.icon, cls: delta > 0 ? `up ${meta.cls}` : `down ${meta.cls}` });
+        }
+        for (const s of event.newStatuses || []) lines.push({ text: `New status: ${s}`, icon: "fa-plus", cls: "status-new" });
+        for (const s of event.editedStatuses || []) lines.push({ text: `Edited status: ${s}`, icon: "fa-pen", cls: "status-edit" });
+        for (const s of event.disabledStatuses || []) lines.push({ text: `Status faded: ${s}`, icon: "fa-moon", cls: "status-disabled" });
+        for (const s of event.removedStatuses || []) lines.push({ text: `Status removed: ${s}`, icon: "fa-trash-can", cls: "status-removed" });
+        if (event.mindChanged) lines.push({ text: "Mind updated", icon: "fa-brain", cls: "mind" });
+        if (event.relationshipChanged) lines.push({ text: "Relationship updated", icon: "fa-link", cls: "mind" });
+
+        if (!lines.length) return; // nothing notable happened
+
         this.show({
             name: event.name,
-            title: reducedLine(event),
-            icon: reducedIcon(event),
-            cls: reducedCls(event),
-            duration: 4000,
+            title: "Relationship updated",
+            lines,
+            icon: "fa-comments-heart",
+            cls: "full",
+            duration: 6000,
         });
-        return;
-    }
-
-    // "all": full breakdown card.
-    const lines = [];
-    for (const [key, delta] of Object.entries(event.stats || {})) {
-        if (!delta) continue;
-        const meta = STAT_META[key] || { label: key, icon: "fa-circle", cls: "neutral" };
-        const sign = delta > 0 ? "+" : "";
-        lines.push({ text: `${sign}${delta} ${meta.label}`, icon: meta.icon, cls: delta > 0 ? `up ${meta.cls}` : `down ${meta.cls}` });
-    }
-    for (const s of event.newStatuses || []) lines.push({ text: `New status: ${s}`, icon: "fa-plus", cls: "status-new" });
-    for (const s of event.editedStatuses || []) lines.push({ text: `Edited status: ${s}`, icon: "fa-pen", cls: "status-edit" });
-    for (const s of event.disabledStatuses || []) lines.push({ text: `Status faded: ${s}`, icon: "fa-moon", cls: "status-disabled" });
-    for (const s of event.removedStatuses || []) lines.push({ text: `Status removed: ${s}`, icon: "fa-trash-can", cls: "status-removed" });
-    if (event.mindChanged) lines.push({ text: "Mind updated", icon: "fa-brain", cls: "mind" });
-    if (event.relationshipChanged) lines.push({ text: "Relationship updated", icon: "fa-link", cls: "mind" });
-
-    if (!lines.length) return; // nothing notable happened
-
-    this.show({
-        name: event.name,
-        title: "Relationship updated",
-        lines,
-        icon: "fa-comments-heart",
-        cls: "full",
-        duration: 6000,
-    });
     }
 }
 
@@ -116,6 +130,7 @@ function dominantStat(event) {
     let bestKey = null;
     let bestVal = 0;
     for (const [key, delta] of Object.entries(event.stats || {})) {
+        if (key === "saturation" || key === "pursuit") continue; // never drive the flavor line
         if (Math.abs(delta) > Math.abs(bestVal)) {
             bestVal = delta;
             bestKey = key;
