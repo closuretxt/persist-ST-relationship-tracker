@@ -19,6 +19,7 @@ import { getTrackerPrompt, INIT_RULES } from "../settings/defaultPrompt.js";
 import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot, getAllCharacters, enabledStatKeys, STAT_LABELS } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
 import { pipelineBar } from "../ui/pipelineBar.js";
+import { persistNotifications } from "../ui/notifications.js";
 
 export const extensionName = "Persist";
 
@@ -475,7 +476,8 @@ export async function runTracker(messageId = null, options = {}) {
 
         pipelineBar.setProgress(0.9, `Applying updates for ${updates.length} character(s)...`);
         for (const update of updates) {
-            applyUpdate(update, turn);
+            const event = applyUpdate(update, turn);
+            if (event) persistNotifications.pushTrackerEvent(event);
         }
 
         const { refreshPersistPanel } = await import("./injection.js");

@@ -105,6 +105,14 @@
                             <input type="checkbox" id="persist_show_pipeline_auto" />
                             <span>Show Progress Bar on Auto Runs</span>
                         </label>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Change popups after each tracker run, bottom left corner. All: every stat delta and status change. Reduced: one short line per character. None: no popups.">
+                            <span style="min-width: 160px;">Tracker Notifications:</span>
+                            <select id="persist_notification_level" class="text_pole flex1">
+                                <option value="all">All (full breakdown)</option>
+                                <option value="reduced">Reduced ("Aria liked that.")</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
                         <label class="checkbox_label" title="Enable this if you are having API issues with the tracker pass (swaps profiles via slash command)">
                             <input type="checkbox" id="persist_legacy_api" />
                             <span>Legacy Connection Profile</span>

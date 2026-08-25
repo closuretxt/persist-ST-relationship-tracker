@@ -228,12 +228,24 @@ function applyStatusFields(status, fields) {
 export function applyUpdate(update, turn) {
     const settings = getExtensionSettings();
     const ch = getOrCreateCharacter(update.charId, update.displayName);
-    if (!ch) return;
+    if (!ch) return null;
+
+    // Notification summary (returned to the caller).
+    const event = {
+        name: ch.displayName || update.charId,
+        stats: {},
+        newStatuses: [],
+        editedStatuses: [],
+        disabledStatuses: [],
+        removedStatuses: [],
+        mindChanged: false,
+        relationshipChanged: false,
+    };
 
     ch.turn = turn;
     // Disabled tracking options are never written.
-    if (update.mind && settings.trackMind !== false) ch.mind = update.mind;
-    if (update.relationship && settings.trackRelationship !== false) ch.relationship = update.relationship;
+    if (update.mind && settings.trackMind !== false) { ch.mind = update.mind; event.mindChanged = true; }
+    if (update.relationship && settings.trackRelationship !== false) { ch.relationship = update.relationship; event.relationshipChanged = true; }
 
     // 0) One-time initialization: for a character never tracked before, the
     // tracker LLM may set ABSOLUTE starting stats reflecting a pre-existing
@@ -258,6 +270,7 @@ export function applyUpdate(update, turn) {
         const similar = findSimilarStatus(ch, op.fields.Name);
         if (similar) {
             applyStatusFields(similar, { ...op.fields, Name: similar.name });
+            event.editedStatuses.push(similar.name);
             continue;
         }
         ch.statuses.push({
@@ -272,11 +285,12 @@ export function applyUpdate(update, turn) {
             disabled: false,
             disabledSinceTurn: null,
         });
+        event.newStatuses.push(op.fields.Name || `Unnamed ${ch.statuses.length - 1}`);
     }
 
     for (const op of update.editStatuses || []) {
         const existing = findStatus(ch, op.fields?.Name);
-        if (existing) applyStatusFields(existing, op.fields);
+        if (existing) { applyStatusFields(existing, op.fields); event.editedStatuses.push(existing.name); }
     }
 
     for (const op of update.disableStatuses || []) {
@@ -284,6 +298,7 @@ export function applyUpdate(update, turn) {
         if (existing && !existing.disabled) {
             existing.disabled = true;
             existing.disabledSinceTurn = turn;
+            event.disabledStatuses.push(existing.name);
         }
     }
 
@@ -295,10 +310,12 @@ export function applyUpdate(update, turn) {
             && ((turn - (existing.disabledSinceTurn ?? turn)) >= requiredDisabledTurns);
         if (eligible) {
             ch.statuses = ch.statuses.filter(s => s !== existing);
+            event.removedStatuses.push(existing.name);
         } else if (existing && !existing.disabled) {
             // Removal not allowed yet; at least make sure it is disabled.
             existing.disabled = true;
             existing.disabledSinceTurn = turn;
+            event.disabledStatuses.push(existing.name);
         }
     }
 
@@ -310,9 +327,11 @@ export function applyUpdate(update, turn) {
     const enabledKeys = enabledStatKeys();
     for (const key of enabledKeys) {
         ch.stats[key] = clamp(ch.stats[key] + deltas[key], 1, 100);
+        event.stats[key] = deltas[key];
     }
 
     saveState();
+    return event;
 }
 
 // Single source of truth for how a character's statuses translate into stat

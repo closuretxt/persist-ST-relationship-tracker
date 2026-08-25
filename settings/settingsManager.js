@@ -23,6 +23,7 @@ export const defaultSettings = {
     injectWorldInfo: true, // Append the <world_info> block to the tracker context
     injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
     showPipelineOnAutoRun: false, // Show the progress bar for automatic tracker runs too (manual runs always show it)
+    notificationLevel: "reduced", // Tracker change popups: "all" | "reduced" | "none"
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
     // One flag per defined stat (generated) plus Mind/Relationship.
@@ -51,6 +52,7 @@ export function initSettingsListeners() {
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
     $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
+    $("#persist_notification_level").on("change", saveSettings);
 
     $("#persist_run_tracker").on("click", async () => {
         const { runTrackerManual } = await import("../tracker/tracker.js");
@@ -101,6 +103,7 @@ export async function loadSettings() {
     $("#persist_character_injection_window").val(s.characterInjectionWindow ?? 10);
 
     populateConnectionDropdown($("#persist_tracker_profile"), s.trackerProfile);
+    $("#persist_notification_level").val(s.notificationLevel || "reduced");
 
     // Render the tracking toggles from the current stat definitions.
     const $options = $("#persist_tracker_options");
@@ -139,6 +142,7 @@ export function saveSettings() {
     s.autoRunInterval = Math.max(1, parseInt($("#persist_auto_run_interval").val(), 10) || 1);
     s.characterInjectionWindow = Math.max(0, parseInt($("#persist_character_injection_window").val(), 10) || 0);
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");
+    s.notificationLevel = String($("#persist_notification_level").val() || "reduced");
     for (const opt of TRACK_OPTIONS) {
         s[opt.flag] = $(`#${opt.id}`).prop("checked");
     }
