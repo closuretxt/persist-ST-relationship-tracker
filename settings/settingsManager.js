@@ -22,6 +22,7 @@ export const defaultSettings = {
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
     injectWorldInfo: true, // Append the <world_info> block to the tracker context
     injectWIOutlets: false, // Append WI outlet entries as separate <outlet> blocks
+    showPipelineOnAutoRun: false, // Show the progress bar for automatic tracker runs too (manual runs always show it)
     // Tracking options: turning one off removes it completely from the tracker
     // prompt, parsing, state applier, injected macro and the panel UI.
     // One flag per defined stat (generated) plus Mind/Relationship.
@@ -43,7 +44,7 @@ const TRACK_OPTIONS = [
 ];
 
 export function initSettingsListeners() {
-    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets, #persist_send_context_as_roles").on("change", saveSettings);
+    $("#persist_enabled, #persist_autorun, #persist_tracker_enabled, #persist_debug_mode, #persist_legacy_api, #persist_inject_world_info, #persist_inject_wi_outlets, #persist_send_context_as_roles, #persist_show_pipeline_auto").on("change", saveSettings);
     $("#persist_injection_mode, #persist_status_inject_format").on("change", saveSettings);
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
@@ -91,6 +92,7 @@ export async function loadSettings() {
     $("#persist_send_context_as_roles").prop("checked", s.sendContextAsRoles === true);
     $("#persist_inject_world_info").prop("checked", s.injectWorldInfo === true);
     $("#persist_inject_wi_outlets").prop("checked", s.injectWIOutlets === true);
+    $("#persist_show_pipeline_auto").prop("checked", s.showPipelineOnAutoRun === true);
     $("#persist_context_depth").val(s.contextDepth ?? 10);
     $("#persist_max_stat_change").val(s.maxStatChangePerTurn ?? 15);
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
@@ -129,6 +131,7 @@ export function saveSettings() {
     s.sendContextAsRoles = $("#persist_send_context_as_roles").prop("checked");
     s.injectWorldInfo = $("#persist_inject_world_info").prop("checked");
     s.injectWIOutlets = $("#persist_inject_wi_outlets").prop("checked");
+    s.showPipelineOnAutoRun = $("#persist_show_pipeline_auto").prop("checked");
     s.contextDepth = parseInt($("#persist_context_depth").val(), 10) || 10;
     s.maxStatChangePerTurn = parseInt($("#persist_max_stat_change").val(), 10) || 15;
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;

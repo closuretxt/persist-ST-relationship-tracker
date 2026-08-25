@@ -382,11 +382,14 @@ async function requestTracker(messages, connectionProfileId) {
 // Main entry points
 // ---------------------------------------------------------------------------
 
-export async function runTracker(messageId = null) {
+export async function runTracker(messageId = null, options = {}) {
     const settings = extension_settings[extensionName];
     if (!settings?.enabled || !settings.trackerEnabled) {
         return { skipped: true, reason: "disabled" };
     }
+    // The pipeline progress bar is manual-only by default; auto runs only
+    // show it when "Show Progress Bar on Auto Runs" is enabled.
+    const showPipeline = options.manual === true || settings.showPipelineOnAutoRun === true;
     if (isRunning) {
         logDebug("Tracker already running; skipping.");
         return { skipped: true, reason: "busy" };
@@ -432,7 +435,9 @@ export async function runTracker(messageId = null) {
     lastRunMessageId = effectiveMessageId;
     isCancelled = false;
 
-    pipelineBar.start("Preparing tracker context...");
+    if (showPipeline) {
+        pipelineBar.start("Preparing tracker context...");
+    }
 
     try {
         const turn = getCurrentTurn(effectiveMessageId);
@@ -533,7 +538,7 @@ export function runTrackerManual() {
     if (typeof toastr !== "undefined") {
         toastr.info("Running relationship tracker...", "Persist");
     }
-    runTracker().then(result => {
+    runTracker(null, { manual: true }).then(result => {
         if (!result.skipped && typeof toastr !== "undefined") {
             toastr.success(`Tracked ${result.updates.length} character(s).`, "Persist");
         }
