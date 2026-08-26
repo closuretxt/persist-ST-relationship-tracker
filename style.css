@@ -111,43 +111,26 @@
     50% { opacity: 0.45; }
 }
 
-/* Settled status (permanently half-baked growth): a quiet green identity -
-   soft glow bleeding from the top-right corner plus a matching hairline
-   accent, while everything else stays as plain as before. */
-.persist-status-item {
-    position: relative;
-    overflow: hidden;
-}
-
+/* Settled status (permanently half-baked growth): retired deltas render as
+   burnt-orange chips - warm and final-looking - while active chips above stay
+   untouched. Nothing else on the item changes. */
 .persist-status-item.persist-status-settled {
-    border-color: rgba(125, 219, 145, 0.4);
-}
-
-.persist-status-item.persist-status-settled::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 52px;
-    height: 52px;
-    background: radial-gradient(circle at top right, rgba(125, 219, 145, 0.32), transparent 68%);
-    pointer-events: none;
-}
-
-/* The permanently baked deltas live on their own dashed chip row so character
-   bars always remain explainable even though active chips only show the half
-   that can still be edited or removed away. */
-.persist-settled-row {
-    opacity: 0.85;
+    border-color: rgba(255, 159, 67, 0.35);
 }
 
 .persist-settled-row .persist-chip {
     border-style: dashed;
-    opacity: 0.9;
+    border-color: rgba(255, 159, 67, 0.55);
+    color: #ffb46b;
+    background-color: rgba(255, 159, 67, 0.07);
+    box-shadow: 0 0 6px rgba(255, 159, 67, 0.18);
 }
 
+/* Right-aligned inside the row so the label never pushes the chips around. */
 .persist-settled-row .persist-chip-hint {
-    color: #7ddb91;
+    margin-left: auto;
+    font-size: 0.72em;
+    color: rgba(255, 180, 107, 0.8);
 }
 
 .persist-mind {
