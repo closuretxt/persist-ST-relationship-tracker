@@ -77,16 +77,38 @@
     white-space: nowrap;
 }
 
-/* Badge shown while a freshly detected character is still waiting for its
-   one-time initialization (absolute starting stats from the tracker LLM). */
+/* Awaiting-initialization state: dashed card + softly pulsing amber badge,
+   with placeholder-looking bars/text so it is obvious the numbers are not
+   real yet (they are set by the tracker LLM on its next run). */
+.persist-character-card.persist-awaiting-init {
+    border-style: dashed;
+}
+
+.persist-awaiting-init .persist-stat-fill,
+.persist-awaiting-init .persist-stat-value,
+.persist-awaiting-init .persist-mind,
+.persist-awaiting-init .persist-relationship-tag,
+.persist-awaiting-init .persist-status-item {
+    opacity: 0.45;
+}
+
 .persist-init-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.78em;
     padding: 2px 8px;
     border-radius: 10px;
-    background-color: var(--SmartThemeBlurTintColor, rgba(255, 255, 255, 0.06));
-    border: 1px dashed var(--SmartThemeBorderColor);
+    color: #ffd76e;
+    background-color: rgba(212, 160, 23, 0.15);
+    border: 1px dashed rgba(212, 160, 23, 0.6);
     white-space: nowrap;
-    opacity: 0.85;
+    animation: persist-init-pulse 2s ease-in-out infinite;
+}
+
+@keyframes persist-init-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
 }
 
 .persist-mind {

@@ -34,6 +34,9 @@ export function buildInjectionText() {
     const blocks = [];
 
     for (const [charId, ch] of Object.entries(characters)) {
+        // Characters still awaiting their one-time initialization only carry
+        // placeholder default stats - never leak them into story prompts.
+        if (ch.initialized === false) continue;
         if (!isCharacterRelevant(ch, currentTurn, window)) continue;
         const statLines = enabledStatKeys().map(k => formatStatLine(k, ch.stats[k]));
         const lines = [];
@@ -150,6 +153,7 @@ function renderNetEffect(net) {
 
 export function renderCharacterCard(charId, ch) {
     const settings = extension_settings[extensionName] || {};
+    const awaitingInit = ch.initialized === false;
     const statBars = enabledStatKeys().map(key => {
         const value = ch.stats[key] ?? 1;
         return `
@@ -188,10 +192,10 @@ export function renderCharacterCard(charId, ch) {
     }).join("");
 
     return `
-        <div class="persist-character-card" data-char="${escapeHtml(charId)}">
+        <div class="persist-character-card ${awaitingInit ? "persist-awaiting-init" : ""}" data-char="${escapeHtml(charId)}">
             <div class="persist-character-header">
                 <span class="persist-character-name">${escapeHtml(ch.name || charId)}</span>
-                ${ch.initialized === false ? `<span class="persist-init-badge" title="Detected but not initialized yet: starting values are placeholders. The next tracker run sets realistic absolute values."><i class="fa-solid fa-hourglass-half"></i> awaiting init</span>` : ""}
+                ${awaitingInit ? `<span class="persist-init-badge" title="Detected but not initialized yet: these values are placeholders. The next tracker run sets realistic absolute starting values."><i class="fa-solid fa-hourglass-half"></i> awaiting init</span>` : ""}
                 ${settings.trackRelationship !== false && ch.relationship ? `<span class="persist-relationship-tag">${escapeHtml(ch.relationship)}</span>` : ""}
             </div>
             ${settings.trackMind !== false && ch.mind ? `<div class="persist-mind">"${escapeHtml(ch.mind)}"</div>` : ""}

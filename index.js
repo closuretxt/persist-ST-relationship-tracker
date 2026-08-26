@@ -36,26 +36,32 @@ jQuery(async () => {
     const st = getContext();
 
     if (st.eventSource && st.event_types) {
+        // Shared gating for ALL automatic tracker runs: master switches,
+        // ghost/user/system filtering, and the "auto run every X turns"
+        // schedule. Turn = message id / 2 (one user+AI exchange); the tracker
+        // only fires when the current turn is a multiple of the interval.
+        // Without this gate BOTH listeners would race past it: the render
+        // event follows MESSAGE_RECEIVED for the same message and would make
+        // the tracker run every single turn regardless of the interval.
+        const shouldAutoRun = (messageId) => {
+            const settings = extension_settings[extensionName];
+            if (!settings?.enabled || !settings.autorun) return false;
+            const msg = st.chat?.[messageId];
+            if (!msg || msg.is_user) return false;
+            if (msg.is_system === true || msg.is_system === "true") return false;
+            const interval = Math.max(1, parseInt(settings.autoRunInterval, 10) || 1);
+            return interval <= 1 || Math.floor(messageId / 2) % interval === 0;
+        };
+
         // Run the tracker after each AI message finishes.
         st.eventSource.on(st.event_types.MESSAGE_RECEIVED, async (messageId) => {
-            if (!extension_settings[extensionName]?.enabled) return;
-            if (!extension_settings[extensionName]?.autorun) return;
-            // On message-added events we can just ignore ghost/system and user
-            // messages entirely; no fallback tracking is needed here.
-            const msg = st.chat?.[messageId];
-            if (!msg || msg.is_user) return;
-            if (msg.is_system === true || msg.is_system === "true") return;
-            // "Auto run every X turns": only fire when the current turn is a
-            // multiple of the interval (turn = message id / 2).
-            const interval = Math.max(1, parseInt(extension_settings[extensionName].autoRunInterval, 10) || 1);
-            if (interval > 1 && (Math.floor(messageId / 2) % interval) !== 0) return;
+            if (!shouldAutoRun(messageId)) return;
             await runTracker(messageId);
         });
 
         // Also cover renders triggered by swipes/regenerations.
         st.eventSource.on(st.event_types.CHARACTER_MESSAGE_RENDERED, async (messageId) => {
-            if (!extension_settings[extensionName]?.enabled) return;
-            if (!extension_settings[extensionName]?.autorun) return;
+            if (!shouldAutoRun(messageId)) return;
             await runTracker(messageId);
         });
 

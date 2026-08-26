@@ -569,9 +569,32 @@ export function runTrackerManual() {
     if (typeof toastr !== "undefined") {
         toastr.info("Running relationship tracker...", "Persist");
     }
+    // A manual run means "track now": always clear the re-entry guard so the
+    // same message can be processed again even when its previous run ended
+    // with nothing to update (no snapshot saved => the rollback above could
+    // not fire). The snapshot rollback above still protects against
+    // double-applying deltas when one exists.
+    resetTrackerGuard();
     runTracker(null, { manual: true }).then(result => {
-        if (!result.skipped && typeof toastr !== "undefined") {
+        if (typeof toastr === "undefined") return;
+        if (!result.skipped) {
             toastr.success(`Tracked ${result.updates.length} character(s).`, "Persist");
+            return;
+        }
+        switch (result.reason) {
+            case "busy":
+                toastr.warning("The tracker is already running. Wait for it to finish.", "Persist", { timeOut: 5000 });
+                break;
+            case "no_updates":
+                toastr.info("Tracker finished: nothing new to update.", "Persist", { timeOut: 5000 });
+                break;
+            case "cancelled":
+                break; // intentional stop, no noise needed
+            case "error":
+                break; // already reported by showErrorToast inside runTracker
+            default:
+                logDebug(`Manual tracker run skipped: ${result.reason}.`);
+                break;
         }
     });
 }

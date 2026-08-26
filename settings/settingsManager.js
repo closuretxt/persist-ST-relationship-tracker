@@ -68,7 +68,12 @@ export function initSettingsListeners() {
     $("#persist_reset_chat").on("click", async () => {
         if (!window.confirm("Reset ALL tracked relationship data for this chat?\n\nEvery character's stats, mind, relationship and statuses will be deleted. This cannot be undone.")) return;
         const state = await import("../tracker/state.js");
+        const tracker = await import("../tracker/tracker.js");
         state.resetChatState();
+        // Clear the per-message re-entry guard too: without this, the next
+        // run against the SAME last message would be skipped as
+        // "already_tracked" even though all tracking data was just wiped.
+        tracker.resetTrackerGuard();
         const { refreshPersistPanel } = await import("../tracker/injection.js");
         refreshPersistPanel();
         if (typeof toastr !== "undefined") {
