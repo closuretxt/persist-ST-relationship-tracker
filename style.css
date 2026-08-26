@@ -111,6 +111,21 @@
     50% { opacity: 0.45; }
 }
 
+/* Settled (permanently half-baked) stat deltas of a matured status: shown as
+   their own chip row so the bars' permanent growth is explainable even though
+   the active modifier chips only show the remaining half. */
+.persist-settled-row {
+    opacity: 0.85;
+}
+
+.persist-settled-row .persist-chip {
+    border-style: dashed;
+}
+
+.persist-settled-row .persist-chip-hint {
+    color: #7dd8a0;
+}
+
 .persist-mind {
     font-style: italic;
     opacity: 0.85;

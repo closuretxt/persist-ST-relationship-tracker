@@ -167,17 +167,20 @@ export function renderCharacterCard(charId, ch) {
     const statusItems = (ch.statuses || []).map((s, index) => {
         const weight = s.disabled ? 0.5 : 1;
         const statChips = formatStatChips(s.statEffects, weight);
+        const settledChips = formatStatChips(s.settledEffects, 1);
+        const settledFlag = settledChips ? " · ½ settled" : "";
         return `
         <div class="persist-status-item ${s.disabled ? "persist-status-disabled" : ""}">
             <div class="persist-status-header">
                 <span class="persist-status-name">${escapeHtml(s.name)}</span>
-                <span class="persist-status-type persist-type-${escapeHtml(String(s.type).toLowerCase())}">${escapeHtml(s.type)}${s.disabled ? " · disabled" : ""}</span>
+                <span class="persist-status-type persist-type-${escapeHtml(String(s.type).toLowerCase())}">${escapeHtml(s.type)}${s.disabled ? " · disabled" : ""}${settledFlag}</span>
             </div>
             ${s.description ? `<div class="persist-status-description">${escapeHtml(s.description)}</div>` : ""}
             ${s.effect ? `<div class="persist-status-effect">${escapeHtml(s.effect)}</div>` : ""}
             ${statChips
                 ? `<div class="persist-status-stats">${statChips}${s.disabled ? '<span class="persist-chip-hint">×½ (disabled)</span>' : ""}</div>`
                 : '<div class="persist-status-stats"><span class="persist-chip persist-chip-zero">No stat effects</span></div>'}
+            ${settledChips ? `<div class="persist-status-stats persist-settled-row">${settledChips}<span class="persist-chip-hint">baked permanently</span></div>` : ""}
             <div class="persist-status-actions">
                 <button class="menu_button menu_button_icon persist-status-toggle" data-char="${escapeHtml(charId)}" data-index="${index}"
                     title="${s.disabled ? "Re-enable this status" : "Disable this status"}">

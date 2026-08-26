@@ -276,6 +276,7 @@ export function applyUpdate(update, turn) {
         const similar = findSimilarStatus(ch, op.fields.Name);
         if (similar) {
             applyStatusFields(similar, { ...op.fields, Name: similar.name });
+            similar.lastModifiedTurn = turn;
             event.editedStatuses.push(similar.name);
             continue;
         }
@@ -288,6 +289,7 @@ export function applyUpdate(update, turn) {
             statEffects: parseStatDeltas(op.fields.Stats),
             date: op.fields.Date || `Turn ${turn}`,
             createdTurn: turn,
+            lastModifiedTurn: turn,
             disabled: false,
             disabledSinceTurn: null,
         });
@@ -296,7 +298,13 @@ export function applyUpdate(update, turn) {
 
     for (const op of update.editStatuses || []) {
         const existing = findStatus(ch, op.fields?.Name);
-        if (existing) { applyStatusFields(existing, op.fields); event.editedStatuses.push(existing.name); }
+        if (existing) {
+            applyStatusFields(existing, op.fields);
+            // Any edit resets the settlement timer: a status must stay
+            // unmodified for the full window before it can bake in.
+            existing.lastModifiedTurn = turn;
+            event.editedStatuses.push(existing.name);
+        }
     }
 
     for (const op of update.disableStatuses || []) {
@@ -356,9 +364,11 @@ export function computeDeltas(ch) {
     const enabled = new Set(enabledStatKeys());
     for (const status of ch.statuses) {
         const weight = status.disabled ? 0.5 : 1;
-        for (const [key, value] of Object.entries(status.statEffects || {})) {
-            if (!enabled.has(key)) continue; // untracked stat
-            deltas[key] += value * weight;
+        for (const key of enabled) {
+            // Settled amounts are already baked into base stats forever:
+            // they bypass the disabled weighting so removal/toggle math
+            // below never claws them back out.
+            deltas[key] += (status.statEffects?.[key] || 0) * weight + (status.settledEffects?.[key] || 0);
         }
     }
 
@@ -432,9 +442,11 @@ function statusOnlyDeltas(ch) {
     const enabled = new Set(enabledStatKeys());
     for (const status of ch.statuses) {
         const weight = status.disabled ? 0.5 : 1;
-        for (const [key, value] of Object.entries(status.statEffects || {})) {
-            if (!enabled.has(key)) continue; // untracked stat
-            deltas[key] += value * weight;
+        for (const key of enabled) {
+            // Settled amounts are weight-independent (see computeDeltas):
+            // identical on both sides of a manual mutation, so the resulting
+            // difference preserves them permanently.
+            deltas[key] += (status.statEffects?.[key] || 0) * weight + (status.settledEffects?.[key] || 0);
         }
     }
     for (const key of STAT_KEYS) {
@@ -470,6 +482,7 @@ export function tickState(turn) {
     if (elapsed > 0) {
         const saturationTracked = settings.trackSaturation !== false;
         for (const ch of Object.values(root.characters)) {
+            settleMaturedStatuses(ch, turn, settings);
             if (!saturationTracked) continue;
             const pursuitBonus = settings.trackPursuit === false ? 0 : Math.floor(ch.stats.pursuit / 25);
             const decay = ((settings.saturationDecayPerTurn ?? 2) * elapsed) + pursuitBonus;
@@ -478,4 +491,40 @@ export function tickState(turn) {
         saveState();
     }
     return true;
+}
+
+// Turns a status must stay unmodified before half of its deltas settle.
+const SETTLE_TURNS_DEFAULT = 4;
+
+// Progression consolidation: once a status has been stable for
+// statusSettleTurns turns, HALF of each of its stat deltas is retired into a
+// permanent ledger. Mechanically this SHRINKS the status's own statEffects to
+// the remaining half and mirrors appliedEffects to match, so every downstream
+// path (edits, disables, removals, manual toggles) automatically treats the
+// settled half as untouchable base growth while only the live half remains a
+// reversible modifier. Nothing moves at settlement time - stats already
+// contained both halves; this just makes one of them permanent.
+function settleMaturedStatuses(ch, turn, settings) {
+    const threshold = Math.max(0, Number(settings?.statusSettleTurns ?? SETTLE_TURNS_DEFAULT));
+    if (threshold <= 0) return; // mechanic disabled
+    for (const status of ch.statuses || []) {
+        if (status.disabled) continue; // dormant statuses don't mature
+        if (status.settledTurn != null) continue; // settle once per status
+        const lastTouch = status.lastModifiedTurn ?? status.createdTurn ?? 0;
+        if (!(turn - lastTouch >= threshold)) continue;
+
+        for (const key of STAT_KEYS) {
+            const value = status.statEffects?.[key];
+            if (!value) continue;
+            const baked = Math.round(value / 2);
+            if (!baked) continue;
+            status.statEffects[key] = value - baked;
+            status.settledEffects = status.settledEffects || {};
+            status.settledEffects[key] = (status.settledEffects[key] || 0) + baked;
+        }
+        // Keep the pending-delta engine consistent: declared effects are now
+        // the shrunk ones and they must count as fully applied already.
+        status.appliedEffects = { ...status.statEffects };
+        status.settledTurn = turn;
+    }
 }
