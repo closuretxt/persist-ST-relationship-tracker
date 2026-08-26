@@ -111,19 +111,43 @@
     50% { opacity: 0.45; }
 }
 
-/* Settled (permanently half-baked) stat deltas of a matured status: shown as
-   their own chip row so the bars' permanent growth is explainable even though
-   the active modifier chips only show the remaining half. */
+/* Settled status (permanently half-baked growth): a quiet green identity -
+   soft glow bleeding from the top-right corner plus a matching hairline
+   accent, while everything else stays as plain as before. */
+.persist-status-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.persist-status-item.persist-status-settled {
+    border-color: rgba(125, 219, 145, 0.4);
+}
+
+.persist-status-item.persist-status-settled::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 52px;
+    height: 52px;
+    background: radial-gradient(circle at top right, rgba(125, 219, 145, 0.32), transparent 68%);
+    pointer-events: none;
+}
+
+/* The permanently baked deltas live on their own dashed chip row so character
+   bars always remain explainable even though active chips only show the half
+   that can still be edited or removed away. */
 .persist-settled-row {
     opacity: 0.85;
 }
 
 .persist-settled-row .persist-chip {
     border-style: dashed;
+    opacity: 0.9;
 }
 
 .persist-settled-row .persist-chip-hint {
-    color: #7dd8a0;
+    color: #7ddb91;
 }
 
 .persist-mind {

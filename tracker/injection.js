@@ -170,7 +170,7 @@ export function renderCharacterCard(charId, ch) {
         const settledChips = formatStatChips(s.settledEffects, 1);
         const settledFlag = settledChips ? " · ½ settled" : "";
         return `
-        <div class="persist-status-item ${s.disabled ? "persist-status-disabled" : ""}">
+        <div class="persist-status-item ${s.disabled ? "persist-status-disabled" : ""}${settledChips ? " persist-status-settled" : ""}">
             <div class="persist-status-header">
                 <span class="persist-status-name">${escapeHtml(s.name)}</span>
                 <span class="persist-status-type persist-type-${escapeHtml(String(s.type).toLowerCase())}">${escapeHtml(s.type)}${s.disabled ? " · disabled" : ""}${settledFlag}</span>
