@@ -16,7 +16,7 @@ import {
 } from "../util/connectionProfiles.js";
 import { swapProfile } from "../util/profileSwapper.js";
 import { getTrackerPrompt, INIT_RULES } from "../settings/defaultPrompt.js";
-import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot, getAllCharacters, getOrCreateCharacter, enabledStatKeys, STAT_LABELS } from "./state.js";
+import { getCurrentTurn, tickState, applyUpdate, createSnapshot, restoreSnapshot, getAllCharacters, enabledStatKeys, STAT_LABELS } from "./state.js";
 import { parseTrackerResponse } from "./parser.js";
 import { pipelineBar } from "../ui/pipelineBar.js";
 import { persistNotifications } from "../ui/notifications.js";
@@ -73,32 +73,6 @@ function getMentionedCharacterIds() {
         }
     }
     return mentioned;
-}
-
-// Register characters from the current exchange before building the prompt.
-// This ensures a new character is included as status="new" even when another
-// character already has tracked state in this chat.
-function registerCharactersFromCurrentExchange() {
-    const st = getST();
-    const visibleChat = st.chat.filter(m => !isGhostMessage(m));
-    const interval = getAutoRunInterval();
-    const target = visibleChat.slice(-Math.min(visibleChat.length, interval * 2));
-    const names = new Set();
-
-    for (const msg of target) {
-        if (msg.is_user === true || msg.is_user === "true") continue;
-        const name = String(msg.name || "").trim();
-        if (name.length >= 2) names.add(name);
-    }
-
-    // Include the active character when its name is not present on the latest
-    // rendered message, which can happen during group-chat transitions.
-    const activeName = String(st.name2 || "").trim();
-    if (activeName.length >= 2) names.add(activeName);
-
-    for (const name of names) {
-        getOrCreateCharacter(name, name);
-    }
 }
 
 function buildCurrentStateBlock() {
@@ -499,7 +473,6 @@ export async function runTracker(messageId = null, options = {}) {
         tickState(turn);
 
         pipelineBar.setProgress(0.15, "Building tracker prompt...");
-        registerCharactersFromCurrentExchange();
         const messages = await buildTrackerMessages();
         const profileId = resolveConnectionProfile(st, settings.trackerProfile || "");
         if (isCancelled) return { skipped: true, reason: "cancelled" };
