@@ -1,11 +1,11 @@
 {
     "display_name": "Persist",
-    "loading_order": 8,
+    "loading_order": 10,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
     "author": "closuretxt",
-    "version": "1.0",
+    "version": "1.1",
     "homePage": "https://github.com/closuretxt/"
 }
