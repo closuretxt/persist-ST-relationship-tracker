@@ -72,6 +72,10 @@
                             <span style="min-width: 160px;">Context Depth:</span>
                             <input type="number" id="persist_context_depth" class="text_pole flex1" value="10" min="0" max="100" step="1" />
                         </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Wait this many seconds after the AI message finishes before sending the tracker request. Useful when another extension needs time to summarize or refine the message.">
+                            <span style="min-width: 160px;">Delay Trigger (seconds):</span>
+                            <input type="number" id="persist_delay_trigger" class="text_pole flex1" value="0" min="0" max="300" step="0.1" />
+                        </div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Run the tracker automatically only every X turns. The context adapts: with 2, the tracker receives the last 2 exchanges to analyze.">
                             <span style="min-width: 160px;">Auto run every (turns):</span>
                             <input type="number" id="persist_auto_run_interval" class="text_pole flex1" value="1" min="1" max="50" step="1" />

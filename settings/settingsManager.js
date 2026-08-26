@@ -7,6 +7,7 @@ export const defaultSettings = {
     enabled: true, // Master switch for the whole extension
     autorun: true, // Run the tracker automatically after AI messages
     autoRunInterval: 1, // Run every X turns (a turn = one user+AI exchange); context adapts to include those turns
+    delayTrigger: 0, // Seconds to wait before sending the tracker request
     sendContextAsRoles: false, // Send history as separate user/assistant/system role messages instead of a text block
     trackerEnabled: true, // Whether the tracker LLM pass runs at all (injection can still work)
     contextDepth: 10, // How many past messages are sent to the tracker FOR CONTEXT ONLY
@@ -51,7 +52,7 @@ export function initSettingsListeners() {
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
-    $("#persist_context_depth, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
+    $("#persist_context_depth, #persist_delay_trigger, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
     $("#persist_notification_level").on("change", saveSettings);
 
@@ -101,6 +102,7 @@ export async function loadSettings() {
     $("#persist_inject_wi_outlets").prop("checked", s.injectWIOutlets === true);
     $("#persist_show_pipeline_auto").prop("checked", s.showPipelineOnAutoRun === true);
     $("#persist_context_depth").val(s.contextDepth ?? 10);
+    $("#persist_delay_trigger").val(s.delayTrigger ?? 0);
     $("#persist_max_stat_change").val(s.maxStatChangePerTurn ?? 15);
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
@@ -141,6 +143,7 @@ export function saveSettings() {
     s.injectWIOutlets = $("#persist_inject_wi_outlets").prop("checked");
     s.showPipelineOnAutoRun = $("#persist_show_pipeline_auto").prop("checked");
     s.contextDepth = parseInt($("#persist_context_depth").val(), 10) || 10;
+    s.delayTrigger = Math.min(300, Math.max(0, parseFloat($("#persist_delay_trigger").val()) || 0));
     s.maxStatChangePerTurn = parseInt($("#persist_max_stat_change").val(), 10) || 15;
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;

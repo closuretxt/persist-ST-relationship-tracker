@@ -27,6 +27,13 @@ let isRunning = false;
 let isCancelled = false;
 let lastRunMessageId = -1; // Swipe/re-entry guard
 
+function waitBeforeRequest() {
+    const seconds = Math.min(300, Math.max(0, Number(extension_settings[extensionName]?.delayTrigger) || 0));
+    if (seconds <= 0) return Promise.resolve();
+    logDebug(`Waiting ${seconds} second(s) before tracker request.`);
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+
 // Called by the pipeline bar's stop button.
 export function cancelTracker() {
     isCancelled = true;
@@ -344,6 +351,8 @@ async function requestTracker(messages, connectionProfileId) {
             if (swapSuccess) swappedProfile = true;
         }
         logDebug(`Tracker request: profile='${profileId || "<same-as-current>"}'`);
+        await waitBeforeRequest();
+        if (isCancelled) return "";
         const createGenerator = await st.ConnectionManagerRequestService.sendRequest(
             profileId,
             messages,

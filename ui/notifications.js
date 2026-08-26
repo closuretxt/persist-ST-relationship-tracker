@@ -117,11 +117,11 @@ export class PersistNotifications {
 
         this.show({
             name: event.name,
-            title: "Relationship updated",
+            title: "",
             lines,
             icon: "fa-comments-heart",
             cls: "full",
-            duration: 6000,
+            duration: 10000,
         });
     }
 }
