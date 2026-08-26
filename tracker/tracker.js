@@ -274,10 +274,10 @@ async function buildWorldInfoBlock() {
     }
 }
 
-// One-time initialization rules, appended to the system prompt only while
-// there is at least one character that has never been tracked (or the chat
-// has no tracked characters at all). Lets the LLM set realistic absolute
-// starting values for pre-existing relationships (spouse, friend, enemy...).
+// Whether the init rules (absolute starting values) go out this run. True
+// only when the store itself shows a need for them: a tracked-but-never-
+// initialized character (status="new" / empty state). Brand-new characters
+// reach this state through the two-run flow (detect -> initialize next run).
 function hasUninitializedCharacters() {
     const characters = getAllCharacters();
     const entries = Object.values(characters);
@@ -399,6 +399,15 @@ async function requestTracker(messages, connectionProfileId) {
 // Main entry points
 // ---------------------------------------------------------------------------
 
+// Case-insensitive existence check, mirroring how parser.js and state.js
+// resolve character IDs: does this reported charId belong to a character that
+// already exists in the store (before anything is created by this run)?
+function isKnownCharacter(charId) {
+    const characters = getAllCharacters();
+    const lower = String(charId).toLowerCase();
+    return Object.keys(characters).some(k => k.toLowerCase() === lower);
+}
+
 export async function runTracker(messageId = null, options = {}) {
     const settings = extension_settings[extensionName];
     if (!settings?.enabled || !settings.trackerEnabled) {
@@ -485,6 +494,10 @@ export async function runTracker(messageId = null, options = {}) {
 
         pipelineBar.setProgress(0.9, `Applying updates for ${updates.length} character(s)...`);
         for (const update of updates) {
+            // Flag BEFORE anything gets created: tells applyUpdate whether
+            // this character existed prior to this run, which drives the
+            // detect-now / initialize-next-run flow for brand-new characters.
+            update.isNewCharacter = !isKnownCharacter(update.charId);
             const event = applyUpdate(update, turn);
             if (event) persistNotifications.pushTrackerEvent(event);
         }

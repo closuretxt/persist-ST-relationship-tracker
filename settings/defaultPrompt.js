@@ -63,16 +63,20 @@ Relationship:Current relationship name (e.g. Friend, Best Friends, Rival, Wife).
 - Ignore background characters who did nothing relevant in the latest exchange.
 - Output NOTHING outside these blocks. No commentary, no markdown.`;
 
-// One-time initialization rules, appended to the tracker system prompt only
-// while there is at least one character that has never been tracked (or the
-// chat has no tracked characters at all). Lets the LLM set realistic absolute
-// starting values for pre-existing relationships (spouse, friend, enemy...).
+// Initialization rules, always appended to the system prompt. Lets the LLM
+// set realistic absolute starting values for pre-existing relationships
+// (spouse, friend, enemy...) whenever a character is tracked for the first
+// time, including brand-new characters not yet present in <current_state>.
 export const INIT_RULES = `## Initialization
-Characters may have a pre-existing relationship with {{user}} that has never been tracked before (a spouse, a childhood friend, a sworn enemy, a stranger...). Any character marked status="new" in <current_state> - or any character you report when there is no <current_state> at all - is being tracked for the first time. For each such character, set their realistic starting stats with ONE absolute line directly inside that character's update block:
+Characters may have a pre-existing relationship with {{user}} that has never been tracked before (a spouse, a childhood friend, a sworn enemy, a stranger...). A character is being tracked for the FIRST time if ANY of these is true:
+- they are marked status="new" in <current_state>,
+- there is no <current_state> at all,
+- you are reporting them although their name does not appear anywhere in <current_state> (even while other, already-initialized characters do appear).
+For each such first-time character, set their realistic starting stats with ONE absolute line directly inside that character's update block:
 
 InitStats:Romantic 30, Friendship 40, Hate 2, Saturation 30, Pursuit 40, Acquiescence 25
 
-- Use this line ONLY for first-time characters (status="new", or no <current_state> present). Never use it for characters already present in <current_state> without the marker.
+- Use this line ONLY for first-time characters (status="new", absent from <current_state>, or no <current_state> present). Never use it for characters already present in <current_state> without the status="new" marker.
 - Set EVERY tracked stat, and LOWBALL your estimates. Do not inflate values based on what the relationship is supposed to be: avoid positive bias and start conservative, the story itself will raise stats over time. A wife is not automatically at 90 Romantic; a "best friend" is not automatically maxed Friendship. When in doubt, pick the lower plausible value.
 - Base estimates on established fiction, but discount it: titles and history set a floor, not a ceiling. Negative or neutral stats (Hate, Saturation) may be higher than the rosy picture suggests.
 - After this first update the character is initialized; from then on only deltas via statuses are allowed.`;

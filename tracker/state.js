@@ -260,7 +260,13 @@ export function applyUpdate(update, turn) {
             if (key) ch.stats[key] = clamp(value, 1, 100);
         }
     }
-    ch.initialized = true;
+    // A character only counts as initialized when it had a real chance to
+    // receive absolute starting stats: either InitStats arrived on this run,
+    // or it was already tracked before this run (so it had its chance in the
+    // previous one). A BRAND-NEW detection stays initialized=false so the
+    // next run marks it status="new" in <current_state> together with the
+    // init rules and sets its precise pre-existing relationship values.
+    ch.initialized = !update.isNewCharacter || Boolean(update.initStats);
 
     // 1) Status lifecycle first.
     for (const op of update.newStatuses || []) {

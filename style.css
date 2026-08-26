@@ -77,6 +77,18 @@
     white-space: nowrap;
 }
 
+/* Badge shown while a freshly detected character is still waiting for its
+   one-time initialization (absolute starting stats from the tracker LLM). */
+.persist-init-badge {
+    font-size: 0.78em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(255, 255, 255, 0.06));
+    border: 1px dashed var(--SmartThemeBorderColor);
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
 .persist-mind {
     font-style: italic;
     opacity: 0.85;
