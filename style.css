@@ -330,22 +330,75 @@
     padding: 10px;
 }
 
+/* NOTE: do NOT switch these labels back to align-items:baseline.
+   ST's default checkbox is display:grid whose baseline comes from the
+   ::before tick pseudo-element (scaled to zero), which under baseline
+   alignment pushes the label text onto its own line. Center alignment
+   avoids that entirely - this was the cause of the old linebreak bug
+   that originally led to forcing native appearance. */
 .persist_settings_content label.checkbox_label {
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 8px;
     margin-bottom: 5px;
     cursor: pointer;
 }
 
-.persist_settings_content label.checkbox_label input[type="checkbox"] {
-    margin: 0;
+/* Modern toggle styling: let SillyTavern's default checkbox design show
+   through instead of forcing native OS checkboxes. We mirror ST's own rules
+   (appearance:none square + animated clip-path tick) here so the extension
+   still renders correctly with sensible fallbacks if any host variable or
+   host stylesheet is unavailable. */
+#persist_extension_settings input[type="checkbox"],
+#persist_side_panel input[type="checkbox"],
+#persist_progress_bar input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: 1px solid var(--grey5020a, rgba(128, 128, 128, 0.25));
+    position: relative;
+    width: var(--mainFontSize, 15px);
+    height: var(--mainFontSize, 15px);
+    overflow: hidden;
+    border-radius: 3px;
+    border: 1px solid var(--SmartThemeBorderColor, #666);
+    background-color: var(--SmartThemeBodyColor, #ccc);
+    box-shadow: inset 0 0 2px 0 var(--SmartThemeShadowColor, transparent);
+    cursor: pointer;
+    transform: translateY(-0.075em);
     flex-shrink: 0;
-    width: auto;
-    height: auto;
-    appearance: auto;
-    -webkit-appearance: checkbox;
+    place-content: center;
+    filter: brightness(1.2);
+    display: grid;
+    margin: 0;
+}
+
+#persist_extension_settings input[type="checkbox"]::before,
+#persist_side_panel input[type="checkbox"]::before,
+#persist_progress_bar input[type="checkbox"]::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    transform: scale(0);
+    transition: 200ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--SmartThemeCheckboxTickColor, rgb(38, 38, 38));
+    transform-origin: bottom left;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+#persist_extension_settings input[type="checkbox"]:checked::before,
+#persist_side_panel input[type="checkbox"]:checked::before,
+#persist_progress_bar input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+#persist_extension_settings input[type="checkbox"]:disabled,
+#persist_side_panel input[type="checkbox"]:disabled,
+#persist_progress_bar input[type="checkbox"]:disabled {
+    color: grey;
+    cursor: not-allowed;
 }
 
 /* ===== Tracker Options Drawer ===== */
@@ -362,6 +415,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 8px;
     margin: 0;
     padding: 6px 10px;
@@ -378,14 +432,8 @@
     border-color: rgba(255, 255, 255, 0.18);
 }
 
-#persist_tracker_options label input[type="checkbox"] {
-    margin: 0;
-    flex-shrink: 0;
-    width: auto;
-    height: auto;
-    appearance: auto;
-    -webkit-appearance: checkbox;
-}
+/* Checkbox styling itself comes from the shared modern-toggle rules above
+   (SillyTavern default look); nothing needs to be overridden here. */
 
 #persist_tracker_options label span {
     font-size: 0.92em;
