@@ -17,7 +17,7 @@ export const defaultSettings = {
     characterInjectionWindow: 10, // Inject only characters active in the last X turns (0 = inject everyone)
     maxStatChangePerTurn: 15, // Hard cap applied in JS to any single stat delta per tracker run
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
-    statusSettleTurns: 4, // Turns a status stays unmodified before half its deltas bake permanently
+    statusSettleTurns: 8, // Turns a status stays unmodified before half its deltas bake permanently
     saturationDecayPerTurn: 1, // Deterministic JS-side Saturation decay per turn
     debug_mode: false,
     legacy_api: false, // Swaps connection profiles via slash command before the request
@@ -53,7 +53,7 @@ export function initSettingsListeners() {
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
-    $("#persist_context_depth, #persist_delay_trigger, #persist_max_stat_change, #persist_status_disable_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
+    $("#persist_context_depth, #persist_delay_trigger, #persist_max_stat_change, #persist_status_disable_turns, #persist_status_settle_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
     $("#persist_notification_level").on("change", saveSettings);
 
@@ -111,6 +111,7 @@ export async function loadSettings() {
     $("#persist_delay_trigger").val(s.delayTrigger ?? 0);
     $("#persist_max_stat_change").val(s.maxStatChangePerTurn ?? 15);
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
+    $("#persist_status_settle_turns").val(s.statusSettleTurns ?? 4);
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
     $("#persist_auto_run_interval").val(s.autoRunInterval ?? 1);
     $("#persist_character_injection_window").val(s.characterInjectionWindow ?? 10);
@@ -152,6 +153,7 @@ export function saveSettings() {
     s.delayTrigger = Math.min(300, Math.max(0, parseFloat($("#persist_delay_trigger").val()) || 0));
     s.maxStatChangePerTurn = parseInt($("#persist_max_stat_change").val(), 10) || 15;
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
+    s.statusSettleTurns = parseInt($("#persist_status_settle_turns").val(), 10) || 0;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
     s.autoRunInterval = Math.max(1, parseInt($("#persist_auto_run_interval").val(), 10) || 1);
     s.characterInjectionWindow = Math.max(0, parseInt($("#persist_character_injection_window").val(), 10) || 0);
