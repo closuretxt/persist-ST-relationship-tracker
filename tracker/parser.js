@@ -3,7 +3,20 @@
 import { getAllCharacters } from "./state.js";
 
 // Matches <Anything_relationship_update> ... </Same>
-const UPDATE_BLOCK_RE = /<([A-Za-z0-9_]+)_relationship_update>([\s\S]*?)<\/\s*\1_relationship_update>/g;
+// Tag names may contain hyphens/spaces (e.g. "Love-chan"); they are normalized
+// to underscores below so "Love-chan" and "Love_chan" resolve to the same ID.
+const UPDATE_BLOCK_RE = /<([A-Za-z0-9_\- ]+?)_relationship_update>([\s\S]*?)<\/\s*\1_relationship_update>/g;
+
+// "Love-chan" / "love chan" -> "Love_chan" (spaces and hyphens become underscores)
+function normalizeTagName(tag) {
+    return String(tag || "").trim().replace(/[\s-]+/g, "_");
+}
+
+// Compare IDs ignoring case plus hyphen/underscore/space differences so
+// "Love_chan", "Love-chan" and "love chan" all resolve to the same entry.
+function normalizeIdForCompare(id) {
+    return String(id || "").toLowerCase().replace(/[\s_-]+/g, "");
+}
 const NEW_STATUS_RE = /<new_status>([\s\S]*?)<\/\s*new_status>/gi;
 const EDIT_STATUS_RE = /<edit_status>([\s\S]*?)<\/\s*edit_status>/gi;
 const DISABLE_STATUS_RE = /<disable_status>([\s\S]*?)<\/\s*disable_status>/gi;
@@ -68,10 +81,11 @@ function resolveCharId(tagName) {
             id = "charname";
         }
     }
-    // Keep the ID stable across turns: reuse an existing entry that differs only by case.
+    // Keep the ID stable across turns: reuse an existing entry that differs
+    // only by case or by hyphen/underscore/space spelling.
     const characters = getAllCharacters();
-    const lower = String(id).toLowerCase();
-    const existingKey = Object.keys(characters).find(k => k.toLowerCase() === lower);
+    const normalized = normalizeIdForCompare(id);
+    const existingKey = Object.keys(characters).find(k => normalizeIdForCompare(k) === normalized);
     return existingKey || id;
 }
 
@@ -83,7 +97,9 @@ export function parseTrackerResponse(responseText, promptText = "") {
     UPDATE_BLOCK_RE.lastIndex = 0;
 
     while ((match = UPDATE_BLOCK_RE.exec(String(responseText || ""))) !== null) {
-        const tagName = match[1];
+        // "Love-chan" / "Love chan" -> "Love_chan" so every spelling of the
+        // same character tag resolves to one stable ID.
+        const tagName = normalizeTagName(match[1]);
         const body = match[2];
 
         // Compute Mind/Relationship from lines OUTSIDE the status blocks so
