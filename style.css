@@ -605,7 +605,7 @@
 
 #persist_side_panel {
     position: fixed;
-    z-index: 100;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     background: var(--SmartThemeBlurTintColor, rgba(24, 24, 34, 0.95));
