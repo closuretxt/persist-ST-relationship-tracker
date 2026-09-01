@@ -344,6 +344,17 @@ export function applyUpdate(update, turn) {
         event.stats[key] = deltas[key];
     }
 
+    // "NewDay" declaration: the fiction moved to a new day, granting a
+    // chunk of Saturation relief (rest, downtime).
+    if (update.newDay && settings.trackSaturation !== false) {
+        const reset = Math.max(0, Number(settings.newDaySaturationReset ?? 40));
+        if (reset > 0) {
+            ch.stats.saturation = clamp(ch.stats.saturation - reset, 1, 100);
+            event.stats.saturation = (event.stats.saturation || 0) - reset;
+            event.newDay = true;
+        }
+    }
+
     saveState();
     return event;
 }
@@ -416,6 +427,15 @@ function computePendingDeltas(ch) {
 // effect) and computePendingDeltas() (actual application).
 function applySaturationRules(deltas, ch, settings) {
     if (settings.trackSaturation !== false) {
+        // Hard barrier: an overwhelmed character (Saturation above the
+        // barrier) cannot gain Romance or Friendship. Losses still pass
+        // through, and blocked gains stop feeding the coupling below.
+        const barrier = Math.max(1, Number(settings.saturationBarrier ?? 90));
+        if (ch.stats.saturation > barrier) {
+            deltas.romantic = Math.min(deltas.romantic || 0, 0);
+            deltas.friendship = Math.min(deltas.friendship || 0, 0);
+        }
+
         // Saturation rises AUTOMATICALLY as other stats rise:
         // Hate x3, Romantic x2, Friendship x1 (conflict tires the character
         // out most, then intimacy, then friendly bonding).

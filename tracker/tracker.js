@@ -287,6 +287,27 @@ function hasUninitializedCharacters() {
     return entries.length === 0 || entries.some(ch => ch.initialized === false);
 }
 
+// Status bloat guard: characters holding more ACTIVE statuses than the soft
+// limit get a hard warning injected into the tracker preamble, ordering the
+// LLM to prune (disable/edit/remove) instead of adding.
+function buildStatusOverflowWarning() {
+    const settings = extension_settings[extensionName] || {};
+    const limit = Math.max(1, parseInt(settings.statusSoftLimit, 10) || 12);
+    const offenders = [];
+    for (const [charId, ch] of Object.entries(getAllCharacters())) {
+        if (ch.initialized === false) continue;
+        const active = (ch.statuses || []).filter(s => !s.disabled).length;
+        if (active > limit) offenders.push(`${ch.name || charId} (${active})`);
+    }
+    if (offenders.length === 0) return "";
+
+    return `<status_overflow_warning>\n` +
+        `CRITICAL: status bloat detected. These characters exceed the ${limit} active status limit: ${offenders.join(", ")}.\n` +
+        `This run you MUST reduce their status count: disable statuses whose "Removed Only If" condition was met, edit/weaken or merge overlapping ones, or remove irrelevant ones.\n` +
+        `Do NOT create any new status for these characters until they are at or below the limit. Prefer <disable_status> and <edit_status> over <new_status>.\n` +
+        `</status_overflow_warning>`;
+}
+
 export async function buildTrackerMessages() {
     const settings = extension_settings[extensionName] || {};
     const wiBlock = await buildWorldInfoBlock();
@@ -297,6 +318,7 @@ export async function buildTrackerMessages() {
     const preamble = substituteParams(
         [
             getTrackerPrompt() + (hasUninitializedCharacters() ? `\n\n${INIT_RULES}` : ""),
+            buildStatusOverflowWarning(),
             buildCurrentStateBlock(),
             buildCharacterCardBlock(),
             buildUserPersonaBlock(),

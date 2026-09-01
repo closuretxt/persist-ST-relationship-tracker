@@ -84,7 +84,8 @@ export class PersistNotifications {
             // Skip pure saturation/pursuit churn: only notify when something
             // meaningful (romantic/friendship/hate or a status) happened.
             const meaningful = this.notifyStats(event).some(([, delta]) => delta !== 0)
-                || (event.newStatuses || []).length > 0;
+                || (event.newStatuses || []).length > 0
+                || event.newDay === true;
             if (!meaningful) return;
 
             this.show({
@@ -110,6 +111,7 @@ export class PersistNotifications {
         for (const s of event.editedStatuses || []) lines.push({ text: `Edited status: ${s}`, icon: "fa-pen", cls: "status-edit" });
         for (const s of event.disabledStatuses || []) lines.push({ text: `Status faded: ${s}`, icon: "fa-moon", cls: "status-disabled" });
         for (const s of event.removedStatuses || []) lines.push({ text: `Status removed: ${s}`, icon: "fa-trash-can", cls: "status-removed" });
+        if (event.newDay) lines.push({ text: "A new day begins - Saturation eased", icon: "fa-sun", cls: "mind" });
         if (event.mindChanged) lines.push({ text: "Mind updated", icon: "fa-brain", cls: "mind" });
         if (event.relationshipChanged) lines.push({ text: "Relationship updated", icon: "fa-link", cls: "mind" });
 

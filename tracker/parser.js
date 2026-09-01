@@ -119,6 +119,7 @@ export function parseTrackerResponse(responseText, promptText = "") {
             mind: outerFields.Mind || "",
             relationship: outerFields.Relationship || "",
             initStats: outerFields.InitStats ? parseInitStats(outerFields.InitStats) : null,
+            newDay: /^(yes|true|1)$/i.test(String(outerFields.NewDay || "")),
             newStatuses: extractStatusBodies(body, NEW_STATUS_RE),
             editStatuses: extractStatusBodies(body, EDIT_STATUS_RE),
             disableStatuses: extractStatusBodies(body, DISABLE_STATUS_RE),

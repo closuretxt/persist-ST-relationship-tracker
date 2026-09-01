@@ -19,6 +19,9 @@ export const defaultSettings = {
     statusDisableTurns: 3, // A status must be disabled for N turns before <remove_status> is honored
     statusSettleTurns: 8, // Turns a status stays unmodified before half its deltas bake permanently
     saturationDecayPerTurn: 1, // Deterministic JS-side Saturation decay per turn
+    saturationBarrier: 90, // Saturation above this blocks Romantic/Friendship gains (code-enforced)
+    newDaySaturationReset: 40, // Saturation chunk removed when the tracker reports a new day
+    statusSoftLimit: 12, // Active statuses per character before the overflow warning fires
     debug_mode: false,
     legacy_api: false, // Swaps connection profiles via slash command before the request
     trackerProfile: "", // Connection Manager profile id used for the tracker LLM ("" = same as current)
@@ -53,7 +56,7 @@ export function initSettingsListeners() {
     // Tracking toggles are rendered dynamically; use delegation so any stat
     // added to statDefinitions.js works without touching this file.
     $("#persist_tracker_options").on("change", "input[type='checkbox']", saveSettings);
-    $("#persist_context_depth, #persist_delay_trigger, #persist_max_stat_change, #persist_status_disable_turns, #persist_status_settle_turns, #persist_saturation_decay, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
+    $("#persist_context_depth, #persist_delay_trigger, #persist_max_stat_change, #persist_status_disable_turns, #persist_status_settle_turns, #persist_saturation_decay, #persist_saturation_barrier, #persist_new_day_reset, #persist_status_soft_limit, #persist_auto_run_interval, #persist_character_injection_window").on("input change", saveSettings);
     $("#persist_tracker_profile").on("change", saveSettings);
     $("#persist_notification_level").on("change", saveSettings);
 
@@ -113,6 +116,9 @@ export async function loadSettings() {
     $("#persist_status_disable_turns").val(s.statusDisableTurns ?? 3);
     $("#persist_status_settle_turns").val(s.statusSettleTurns ?? 4);
     $("#persist_saturation_decay").val(s.saturationDecayPerTurn ?? 2);
+    $("#persist_saturation_barrier").val(s.saturationBarrier ?? 90);
+    $("#persist_new_day_reset").val(s.newDaySaturationReset ?? 40);
+    $("#persist_status_soft_limit").val(s.statusSoftLimit ?? 12);
     $("#persist_auto_run_interval").val(s.autoRunInterval ?? 1);
     $("#persist_character_injection_window").val(s.characterInjectionWindow ?? 10);
 
@@ -155,6 +161,9 @@ export function saveSettings() {
     s.statusDisableTurns = parseInt($("#persist_status_disable_turns").val(), 10) || 3;
     s.statusSettleTurns = parseInt($("#persist_status_settle_turns").val(), 10) || 0;
     s.saturationDecayPerTurn = parseInt($("#persist_saturation_decay").val(), 10) || 0;
+    s.saturationBarrier = Math.max(1, parseInt($("#persist_saturation_barrier").val(), 10) || 90);
+    s.newDaySaturationReset = Math.max(0, parseInt($("#persist_new_day_reset").val(), 10) || 0);
+    s.statusSoftLimit = Math.max(1, parseInt($("#persist_status_soft_limit").val(), 10) || 12);
     s.autoRunInterval = Math.max(1, parseInt($("#persist_auto_run_interval").val(), 10) || 1);
     s.characterInjectionWindow = Math.max(0, parseInt($("#persist_character_injection_window").val(), 10) || 0);
     s.trackerProfile = String($("#persist_tracker_profile").val() || "");

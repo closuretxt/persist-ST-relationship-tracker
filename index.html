@@ -64,6 +64,7 @@
                         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                     </div>
                     <div class="inline-drawer-content">
+                        <div class="persist-settings-group">Tracker Runs</div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Connection Manager profile used for the tracker LLM call (requires Connection Manager)">
                             <span style="min-width: 160px;">Tracker Profile:</span>
                             <select id="persist_tracker_profile" class="text_pole flex1"></select>
@@ -80,10 +81,38 @@
                             <span style="min-width: 160px;">Auto run every (turns):</span>
                             <input type="number" id="persist_auto_run_interval" class="text_pole flex1" value="1" min="1" max="50" step="1" />
                         </div>
+                        <label class="checkbox_label" style="margin-top: 8px;" title="Send the history context as distinct user/assistant/system role messages instead of a single text block. Everything else (character, persona, world info, tracked state) stays in the system role.">
+                            <input type="checkbox" id="persist_send_context_as_roles" />
+                            <span>Send Context as Roles</span>
+                        </label>
+                        <label class="checkbox_label" title="Append the activated World Info (before/after entries) to the tracker context inside a <world_info> block">
+                            <input type="checkbox" id="persist_inject_world_info" />
+                            <span>Inject World Info into Tracker</span>
+                        </label>
+                        <label class="checkbox_label" title="Append World Info outlet entries to the tracker context as separate <outlet> blocks">
+                            <input type="checkbox" id="persist_inject_wi_outlets" />
+                            <span>Inject WI Outlets into Tracker</span>
+                        </label>
+
+                        <div class="persist-settings-group">Stat Rules</div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Hard cap applied to any single stat change per tracker run">
                             <span style="min-width: 160px;">Max Stat Change / Turn:</span>
                             <input type="number" id="persist_max_stat_change" class="text_pole flex1" value="15" min="1" max="100" step="1" />
                         </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Deterministic Saturation decay applied every turn">
+                            <span style="min-width: 160px;">Saturation Decay / Turn:</span>
+                            <input type="number" id="persist_saturation_decay" class="text_pole flex1" value="2" min="0" max="50" step="1" />
+                        </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Hard barrier: when a character's Saturation is above this, they cannot gain Romance or Friendship. Enforced in code - the LLM cannot bypass it.">
+                            <span style="min-width: 160px;">Saturation Barrier:</span>
+                            <input type="number" id="persist_saturation_barrier" class="text_pole flex1" value="90" min="1" max="100" step="1" />
+                        </div>
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Saturation removed when the tracker reports a new day (characters slept / time skipped in the fiction)">
+                            <span style="min-width: 160px;">New Day Reset:</span>
+                            <input type="number" id="persist_new_day_reset" class="text_pole flex1" value="40" min="0" max="100" step="1" />
+                        </div>
+
+                        <div class="persist-settings-group">Statuses</div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Turns a status must stay disabled before a removal request is honored">
                             <span style="min-width: 160px;">Status Disable Turns:</span>
                             <input type="number" id="persist_status_disable_turns" class="text_pole flex1" value="3" min="0" max="50" step="1" />
@@ -92,30 +121,18 @@
                             <span style="min-width: 160px;">Status Settle Turns:</span>
                             <input type="number" id="persist_status_settle_turns" class="text_pole flex1" value="4" min="0" max="50" step="1" />
                         </div>
-                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Deterministic Saturation decay applied every turn">
-                            <span style="min-width: 160px;">Saturation Decay / Turn:</span>
-                            <input type="number" id="persist_saturation_decay" class="text_pole flex1" value="2" min="0" max="50" step="1" />
+                        <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Active statuses a character may hold before the tracker is ordered to prune (disable/edit/remove) instead of adding more">
+                            <span style="min-width: 160px;">Status Soft Limit:</span>
+                            <input type="number" id="persist_status_soft_limit" class="text_pole flex1" value="12" min="1" max="50" step="1" />
                         </div>
+
+                        <div class="persist-settings-group">Injection</div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Only inject characters that were updated within the last X turns into {{relationship_persistent}} (0 = inject everyone, no matter how long ago). Keeps token usage sane in harem/large-cast scenarios.">
                             <span style="min-width: 160px;">Character Inject Window:</span>
                             <input type="number" id="persist_character_injection_window" class="text_pole flex1" value="10" min="0" max="999" step="1" />
                         </div>
-                        <label class="checkbox_label" style="margin-top: 8px;" title="Append the activated World Info (before/after entries) to the tracker context inside a <world_info> block">
-                            <input type="checkbox" id="persist_inject_world_info" />
-                            <span>Inject World Info into Tracker</span>
-                        </label>
-                        <label class="checkbox_label" title="Append World Info outlet entries to the tracker context as separate <outlet> blocks">
-                            <input type="checkbox" id="persist_inject_wi_outlets" />
-                            <span>Inject WI Outlets into Tracker</span>
-                        </label>
-                        <label class="checkbox_label" title="Send the history context as distinct user/assistant/system role messages instead of a single text block. Everything else (character, persona, world info, tracked state) stays in the system role.">
-                            <input type="checkbox" id="persist_send_context_as_roles" />
-                            <span>Send Context as Roles</span>
-                        </label>
-                        <label class="checkbox_label" title="Show the progress bar for automatic tracker runs as well. Manual runs always show it.">
-                            <input type="checkbox" id="persist_show_pipeline_auto" />
-                            <span>Show Progress Bar on Auto Runs</span>
-                        </label>
+
+                        <div class="persist-settings-group">Interface</div>
                         <div class="flex-container alignitemscenter" style="margin-top: 8px;" title="Change popups after each tracker run, bottom left corner. All: every stat delta and status change. Reduced: one short line per character. None: no popups.">
                             <span style="min-width: 160px;">Tracker Notifications:</span>
                             <select id="persist_notification_level" class="text_pole flex1">
@@ -124,6 +141,12 @@
                                 <option value="none">None</option>
                             </select>
                         </div>
+                        <label class="checkbox_label" title="Show the progress bar for automatic tracker runs as well. Manual runs always show it.">
+                            <input type="checkbox" id="persist_show_pipeline_auto" />
+                            <span>Show Progress Bar on Auto Runs</span>
+                        </label>
+
+                        <div class="persist-settings-group">Troubleshooting</div>
                         <label class="checkbox_label" title="Enable this if you are having API issues with the tracker pass (swaps profiles via slash command)">
                             <input type="checkbox" id="persist_legacy_api" />
                             <span>Legacy Connection Profile</span>
